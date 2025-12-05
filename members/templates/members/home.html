@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+      .product-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-top: 10px;
+          margin-bottom: 30px;
+      }
+
+      .product-card {
+          border: 1px solid #ccc;
+          padding: 10px 15px;
+          width: 260px;
+          box-sizing: border-box;
+          border-radius: 6px;
+          background: #fafafa;
+      }
+
+      .product-card img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin-bottom: 8px;
+      }
+
+      .product-card video,
+      .product-card iframe {
+          max-width: 100%;
+          display: block;
+          margin-top: 8px;
+      }
+
+      .product-name {
+          font-weight: bold;
+          margin-bottom: 4px;
+      }
+
+      .product-price {
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 6px;
+      }
+
+      .product-description {
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+      }
+    </style>
+
+    <meta charset="UTF-8">
+    <title>Online Fitness Club</title>
+</head>
+<body>
+    <h1>🏋️ Online Fitness Club</h1>
+    <p>Welcome to your new fitness club website built with Python & Django.</p>
+
+    <h2>Membership</h2>
+    <p>Later we will list membership plans here (Basic, Standard, Premium).</p>
+
+    <h2>Products</h2>
+
+    <h2>Products</h2>
+
+    {% if products %}
+        <div class="product-grid">
+            {% for p in products %}
+                <div class="product-card">
+                    <div class="product-name">{{ p.name }}</div>
+                    <div class="product-price">${{ p.price }}</div>
+                    <div class="product-description">{{ p.description }}</div>
+
+                    {# Show all media for this product #}
+                    {% for m in p.media.all %}
+                        {% if m.media_type == "image" and m.image %}
+                            <img src="{{ m.image.url }}" alt="{{ m.title|default:p.name }}">
+                        {% elif m.media_type == "video_file" and m.video %}
+                            <video controls>
+                                <source src="{{ m.video.url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% elif m.media_type == "video_url" and m.video_url %}
+                            <iframe
+                                src="{{ m.video_url }}"
+                                frameborder="0"
+                                allowfullscreen>
+                            </iframe>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No products yet. Add some in the admin page.</p>
+    {% endif %}
+
+
+
+    <h2>Services</h2>
+    <p>Later we will add training sessions, personal coaching, and online classes.</p>
+</body>
+</html>
