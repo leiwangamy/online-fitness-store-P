@@ -2,11 +2,45 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Product
 from decimal import Decimal
+from django.shortcuts import render
+from .models import Product, Category
+
+def product_list(request):
+    category_slug = request.GET.get("category")   # read ?category=towels from URL
+    categories = Category.objects.all()
+
+    products = Product.objects.filter(is_active=True)
+
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+
+    return render(request, "product_list.html", {
+        "products": products,
+        "categories": categories,
+        "selected_category": category_slug,
+    })
 
 
 def home(request):
+    # read ?category=towels etc. from URL
+    category_slug = request.GET.get("category")
+
+    # all categories for the buttons
+    categories = Category.objects.all()
+
+    # base query: only active products
     products = Product.objects.filter(is_active=True).order_by("name")
-    return render(request, "members/home.html", {"products": products})
+
+    # filter by category if one is selected
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+
+    context = {
+        "products": products,
+        "categories": categories,
+        "selected_category": category_slug,
+    }
+    return render(request, "members/home.html", context)
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk, is_active=True)

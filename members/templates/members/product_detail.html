@@ -65,12 +65,41 @@
 <div class="product-detail">
     <div class="name">{{ product.name }}</div>
     <div class="price">${{ product.price }}</div>
+
+<p>Price: ${{ product.price }}</p>
+
+{% if product.charge_gst %}
+<p>GST (5%): ${{ product.gst_amount }}</p>
+{% else %}
+<p>GST: Not applicable</p>
+{% endif %}
+
+{% if product.charge_pst %}
+<p>PST (7%): ${{ product.pst_amount }}</p>
+{% else %}
+<p>PST: Not applicable</p>
+{% endif %}
+
+<p><strong>Price with taxes: ${{ product.price_with_tax }}</strong></p>
+
+<p>In stock: {{ product.quantity_in_stock }}</p>
+
     <p>{{ product.description }}</p>
 
+    {% if product.quantity_in_stock > 0 %}
     <form action="{% url 'add_to_cart' product.pk %}" method="post">
         {% csrf_token %}
         <button type="submit">Add to Cart</button>
     </form>
+{% else %}
+    <p style="color: red; font-weight: bold; margin-top: 10px;">
+        Out of stock
+    </p>
+    <button type="button" disabled style="opacity: 0.6; cursor: not-allowed;">
+        Out of Stock
+    </button>
+{% endif %}
+
 
     <p><a href="{% url 'cart_detail' %}">View Cart</a></p>
 

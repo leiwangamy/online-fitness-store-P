@@ -60,6 +60,21 @@
 <section>
     <h2>Featured Products</h2>
 
+    <div style="margin-bottom: 20px;">
+    <a href="?category=" 
+       style="margin-right: 10px; {% if not selected_category %}font-weight:bold{% endif %}">
+        All
+    </a>
+
+    {% for cat in categories %}
+        <a href="?category={{ cat.slug }}"
+           style="margin-right: 10px; {% if selected_category == cat.slug %}font-weight:bold{% endif %}">
+           {{ cat.name }}
+        </a>
+    {% endfor %}
+</div>
+
+
     {% if products %}
         <ul>
             {% for product in products %}
