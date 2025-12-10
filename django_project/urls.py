@@ -5,8 +5,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("payment/", include("payment.urls")),
     path("", include("members.urls")),  # 👈 home + main site from members
-     path("accounts/", include("django.contrib.auth.urls")),  # login/logout/password
+    path("accounts/", include("django.contrib.auth.urls")),  # login/logout/password
 ]
 
 if settings.DEBUG:

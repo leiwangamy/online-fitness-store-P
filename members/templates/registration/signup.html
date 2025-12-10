@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Member Sign Up – My Fitness Club</title>
+    <style>
+        body {
+            background-color: #e3ffe3;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        nav a {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .card {
+            max-width: 450px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+        button {
+            padding: 6px 14px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Create Member Account</h1>
+
+    <nav>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'cart_detail' %}">Cart</a>
+        <a href="/admin/">Admin</a>
+    </nav>
+
+    <hr>
+</header>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Sign up</button>
+    </form>
+
+    <p style="margin-top:15px;">
+        Already have an account?
+        <a href="{% url 'login' %}">Log in here</a>
+    </p>
+
+    <p><a href="{% url 'home' %}">Back to Home</a></p>
+</div>
+
+</body>
+</html>

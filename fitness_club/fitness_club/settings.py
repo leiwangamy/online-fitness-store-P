@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-8vc6s!rg(#k8cz5vu*oh18bvr)2mrie#o^j6i006d=x+yz9@7$
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+ 
 
 # Application definition
 
@@ -43,8 +43,7 @@ INSTALLED_APPS = [
     'products',
     'cart',
     'orders',
-    'members',
-
+    'payment.apps.PaymentConfig',   # ⬅️ use this 
     'members',
     'rest_framework',
     
@@ -136,4 +135,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Media files (uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Where to go after login / logout
+LOGIN_REDIRECT_URL = 'home'      # name of your home view
+LOGOUT_REDIRECT_URL = 'home'     # after logout, go back to home
+LOGIN_URL = 'login'              # used by @login_required
 

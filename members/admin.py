@@ -27,21 +27,40 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
-        'name',
-        'category', 
-        'price',
-        'quantity_in_stock',
-        'charge_gst',
-        'charge_pst',
-        'is_active',
-        # Optional, only if you added this @property in the model:
-        # 'price_with_tax',
+    'name',
+    'category',
+    'price',
+    'quantity_in_stock',
+    'charge_gst',
+    'charge_pst',
+    'is_digital',
+    'is_service',
+    'is_active',
     )
     list_filter = (
-        'category', 
-        'is_active',
-        'charge_gst',
-        'charge_pst',
+    'category',
+    'is_active',
+    'charge_gst',
+    'charge_pst',
+    'is_digital',
+    'is_service',
+    )
+    fieldsets = (
+        ("Basic Info", {
+            "fields": ("name", "description", "price", "is_active", "category")
+        }),
+        ("Tax & Stock", {
+            "fields": ("quantity_in_stock", "charge_gst", "charge_pst")
+        }),
+        ("Digital Product", {
+            "fields": ("is_digital",),
+            "classes": ("collapse",)
+        }),
+        ("Service Product (Classes / Coaching)", {
+            "fields": ("is_service", "service_date", "service_time",
+                       "service_duration_minutes", "service_location"),
+            "classes": ("collapse",)
+        }),
     )
     search_fields = ('name',)
     inlines = [ProductImageInline, ProductVideoInline, ProductAudioInline]

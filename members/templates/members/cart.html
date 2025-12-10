@@ -2,39 +2,191 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Your Cart</title>
+    <title>Your Cart – Fitness Club</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #d8f3dc;   /* light green */
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        /* Top nav & account area */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .nav-links a {
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .account-area {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #eef;
+            font-size: 0.9rem;
+        }
+        .account-area a {
+            font-weight: normal;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 6px 10px;
+            text-align: center;
+        }
+
+        .product-img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+        }
+
+        .total-box {
+            margin-top: 15px;
+        }
+        .total-box p {
+            margin: 3px 0;
+        }
+        .total-box strong {
+            font-size: 1.05rem;
+        }
+
+        .cart-links {
+            margin-top: 20px;
+        }
+        .cart-links a {
+            display: inline-block;
+            margin-right: 20px;
+        }
+    </style>
 </head>
 <body>
+
+<header>
     <h1>Your Cart</h1>
 
-    {% if items %}
-        <table border="1" cellpadding="5">
+    <nav class="top-nav">
+        <div class="nav-links">
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'cart_detail' %}">Cart</a>
+            <a href="{% url 'login' %}">Member Login</a>
+            <a href="{% url 'signup' %}">Sign Up</a>
+            <a href="/admin/">Admin (staff only)</a>
+        </div>
+
+        <div class="account-area">
+            {% if user.is_authenticated %}
+                👤 You are logged in as <strong>{{ user.username }}</strong>.
+                <a href="{% url 'logout' %}">Logout</a>
+            {% else %}
+                👤 <a href="{% url 'login' %}">Login</a>
+                or
+                <a href="{% url 'signup' %}">Sign Up</a>.
+            {% endif %}
+        </div>
+    </nav>
+    <hr>
+</header>
+
+{% if items %}
+    <table>
+        <thead>
             <tr>
+                <th>Image</th>
                 <th>Product</th>
                 <th>Quantity</th>
                 <th>Line Total</th>
                 <th></th>
             </tr>
+        </thead>
+        <tbody>
             {% for item in items %}
                 <tr>
+                    <td>
+                        {% if item.product.main_image %}
+                            <img src="{{ item.product.main_image }}" alt="{{ item.product.name }}" class="product-img">
+                        {% elif item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="product-img">
+                        {% else %}
+                            (no image)
+                        {% endif %}
+                    </td>
                     <td>{{ item.product.name }}</td>
-                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <form action="{% url 'add_to_cart' item.product.id %}" method="post" class="cart-update-form">
+                            {% csrf_token %}
+                            <input
+                                type="number"
+                                name="quantity"
+                                value="{{ item.quantity }}"
+                                min="1"
+                                style="width:50px;"
+                                class="qty-input"
+                            >
+                            <input type="hidden" name="override" value="True">
+                            {# No visible button needed now #}
+                        </form>
+                    </td>
+
                     <td>{{ item.line_total }}</td>
                     <td>
                         <a href="{% url 'remove_from_cart' item.product.pk %}">Remove</a>
                     </td>
                 </tr>
             {% endfor %}
-        </table>
-        <p><strong>Total: {{ total }}</strong></p>
+        </tbody>
+    </table>
 
-        <p>
-            <a href="{% url 'payment' %}">Proceed to Payment</a>
-        </p>
-    {% else %}
-        <p>Your cart is empty.</p>
-    {% endif %}
+    <div class="total-box">
+        <p>Subtotal: <strong>${{ subtotal }}</strong></p>
+        <p>GST/HST (5%): <strong>${{ tax }}</strong></p>
+        <p>Total with tax: <strong>${{ total_with_tax }}</strong></p>
+    </div>
 
-    <p><a href="{% url 'home' %}">Back to Home</a></p>
+    <div class="cart-links">
+        <a href="{% url 'payment:checkout' %}">Proceed to Payment</a>
+        <a href="{% url 'home' %}">Continue Shopping</a>
+    </div>
+
+{% else %}
+    <p>Your cart is empty.</p>
+    <a href="{% url 'home' %}">Continue Shopping</a>
+{% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // When the quantity changes, submit that row's form automatically
+    document.querySelectorAll('.qty-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            let value = parseInt(this.value, 10);
+
+            // prevent zero / negative / NaN
+            if (isNaN(value) || value < 1) {
+                this.value = 1;
+            }
+
+            this.form.submit();
+        });
+
+        // Optional: also submit on Enter key, even before leaving the field
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.dispatchEvent(new Event('change'));
+            }
+        });
+    });
+});
+</script>
+
 </body>
 </html>
