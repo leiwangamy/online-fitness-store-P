@@ -5,8 +5,12 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
+from datetime import timedelta
 
 
+# =========================
+#  CATEGORY
+# =========================
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
@@ -15,6 +19,9 @@ class Category(models.Model):
         return self.name
 
 
+# =========================
+#  PRODUCT
+# =========================
 class Product(models.Model):
     # Product belongs to one category (optional)
     category = models.ForeignKey(
@@ -40,11 +47,11 @@ class Product(models.Model):
     charge_gst = models.BooleanField(default=True, verbose_name="Charge GST (5%)")
     charge_pst = models.BooleanField(default=False, verbose_name="Charge PST (7%)")
 
-    # 👉 PRODUCT TYPE FLAGS
+    # PRODUCT TYPE FLAGS
     is_digital = models.BooleanField(default=False)   # Instant download product
     is_service = models.BooleanField(default=False)   # Yoga class, coaching, etc.
 
-    # 👉 SERVICE-ONLY FIELDS
+    # SERVICE-ONLY FIELDS
     # Seats: if set -> limited seats; if blank -> unlimited seats
     service_seats = models.PositiveIntegerField(
         null=True,
@@ -137,6 +144,9 @@ class Product(models.Model):
         return self.name
 
 
+# =========================
+#  PRODUCT MEDIA
+# =========================
 class ProductImage(models.Model):
     product = models.ForeignKey(
         Product,
@@ -202,28 +212,59 @@ class ProductAudio(models.Model):
         return f"{self.product.name} - Audio {self.title or self.id}"
 
 
+# =========================
+#  MEMBER PROFILE / MEMBERSHIP
+# =========================
 class MemberProfile(models.Model):
-    """
-    Extra info for each user: whether they are an active member,
-    and optional start/end dates.
-    """
+    MEMBERSHIP_LEVEL_CHOICES = [
+        ("none", "No membership"),
+        ("basic", "Facility only – unlimited gym access"),
+        ("premium", "Facility + unlimited in-class training"),
+    ]
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='member_profile',
+        related_name="member_profile",
     )
+
+    membership_level = models.CharField(
+        max_length=20,
+        choices=MEMBERSHIP_LEVEL_CHOICES,
+        default="none",
+    )
+
     is_member = models.BooleanField(default=False)
     membership_started = models.DateTimeField(blank=True, null=True)
     membership_expires = models.DateTimeField(blank=True, null=True)
 
+    # Auto-billing description fields (no real payment yet)
+    auto_renew = models.BooleanField(
+        default=False,
+        help_text="If enabled, membership will auto-renew each month (logic only, no real billing).",
+    )
+
+    next_billing_date = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Date of next renewal charge (for display / logic only).",
+    )
+
+    last_billed_date = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Most recent date membership was 'renewed'.",
+    )
+
     def __str__(self):
-        return f"{self.user.username} – member={self.is_member}"
+        return f"{self.user.username} – {self.get_membership_level_display()}"
 
     @property
     def is_active_member(self):
         """
-        Returns True if membership flag is ON and
-        not expired (or no expiry date set).
+        Active if:
+        - is_member is True
+        - and not expired (or no expiry set)
         """
         if not self.is_member:
             return False
@@ -231,9 +272,51 @@ class MemberProfile(models.Model):
             return False
         return True
 
+    # ------- Helper methods to show auto-billing logic (no real billing) -------
+
+    def start_monthly_membership(self, level, price=None):
+        """
+        Example logic of how monthly membership could be started.
+        This does NOT charge any money, it's just for your internal logic.
+        """
+        now = timezone.now()
+        self.membership_level = level          # "basic" or "premium"
+        self.is_member = True
+        self.membership_started = now
+        # Simple 30-day period for demo
+        self.membership_expires = now + timedelta(days=30)
+        self.auto_renew = True
+        self.next_billing_date = (now + timedelta(days=30)).date()
+        self.last_billed_date = now.date()
+        self.save()
+
+    def simulate_monthly_billing_cycle(self):
+        """
+        Pseudo-code of an auto-billing cycle.
+
+        If today >= next_billing_date and auto_renew is True:
+            - In real life: charge credit card (Stripe/PayPal/etc.)
+            - If success: extend membership_expires + move next_billing_date
+            - If fail: set is_member = False and auto_renew = False
+
+        Here we only update dates to demonstrate the logic.
+        """
+        today = timezone.now().date()
+        if not self.auto_renew or not self.is_member:
+            return
+
+        if self.next_billing_date and today >= self.next_billing_date:
+            # In a real system, you would attempt a payment here.
+
+            # Simulate success: extend another 30 days
+            now = timezone.now()
+            self.membership_expires = now + timedelta(days=30)
+            self.last_billed_date = today
+            self.next_billing_date = today + timedelta(days=30)
+            self.save()
+
 
 # ---------- signals to auto-create MemberProfile ----------
-
 User = get_user_model()
 
 
@@ -245,5 +328,97 @@ def create_member_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_member_profile(sender, instance, **kwargs):
-    if hasattr(instance, 'member_profile'):
+    if hasattr(instance, "member_profile"):
         instance.member_profile.save()
+
+
+# =========================
+#  ORDER + ORDER ITEM
+# =========================
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("paid", "Paid"),
+        ("processing", "Processing"),
+        ("shipped", "Shipped"),
+        ("delivered", "Delivered"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    CARRIER_CHOICES = [
+        ("canadapost", "Canada Post"),
+        ("ups", "UPS"),
+        ("fedex", "FedEx"),
+        ("dhl", "DHL"),
+        ("other", "Other / Local"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
+
+    tracking_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Shipping tracking number (if applicable)",
+    )
+
+    shipping_carrier = models.CharField(
+        max_length=20,
+        choices=CARRIER_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Shipping company for physical items",
+    )
+
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    tax = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+    shipping = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+    )
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Order #{self.pk} ({self.user})"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="order_items",
+    )
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Price per unit at time of purchase",
+    )
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"

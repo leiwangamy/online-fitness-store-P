@@ -1,12 +1,15 @@
 from decimal import Decimal
 
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login as auth_login
+from django.contrib.auth import login as auth_login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
 
-from .models import Product, Category
+from .models import Product, Category, Order, MemberProfile
+
 
 
 def product_list(request):
@@ -79,19 +82,30 @@ def add_to_cart(request, pk):
     product_id = str(product.pk)
     current_qty = cart.get(product_id, 0)
 
-    # Use the actual stock field from your Product model
-    max_stock = getattr(product, "quantity_in_stock", 0)
+    # Figure out product type
+    is_digital = getattr(product, "is_digital", False)
+    is_service = getattr(product, "is_service", False)
+    is_physical = not is_digital and not is_service
 
-    # If you want digital/service products to ignore stock, you could do:
-    # if getattr(product, "is_digital", False) or getattr(product, "is_service", False):
-    #     max_stock = 999999
+    # --- Stock rules ---
+    if is_physical:
+        # Physical product: use real stock
+        max_stock = getattr(product, "quantity_in_stock", 0) or 0
 
-    # No stock at all -> do nothing
-    if max_stock <= 0:
-        return redirect("cart_detail")
+        # No stock at all -> do nothing (stay on cart)
+        if max_stock <= 0:
+            return redirect("cart_detail")
+    else:
+        # Digital or service product: treat as unlimited stock
+        max_stock = 999999
 
     if request.method == "POST":
-        quantity = int(request.POST.get("quantity", 1))
+       # Digital or service → always force 1 seat
+        if product.is_digital or product.is_service:
+            quantity = 1
+        else:
+            quantity = int(request.POST.get("quantity", 1))
+
         override = request.POST.get("override") == "True"
 
         if quantity < 1:
@@ -213,3 +227,65 @@ def signup(request):
         form = UserCreationForm()
 
     return render(request, "registration/signup.html", {"form": form})
+
+@login_required
+def my_orders(request):
+    """
+    Show a list of orders for the logged-in user.
+    """
+    orders = (
+        Order.objects
+        .filter(user=request.user)
+        .order_by("-created_at")
+    )
+    context = {
+        "orders": orders,
+    }
+    return render(request, "members/my_orders.html", context)
+
+
+@login_required
+def my_order_detail(request, pk):
+    """
+    Show details for a single order that belongs to this user.
+    """
+    order = get_object_or_404(Order, pk=pk, user=request.user)
+    context = {
+        "order": order,
+    }
+    return render(request, "members/my_order_detail.html", context)
+
+@login_required
+def my_membership(request):
+    profile, created = MemberProfile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST" and "cancel_membership" in request.POST:
+        # User cancels membership
+        profile.is_member = False
+        profile.membership_level = "none"
+        profile.membership_expires = timezone.now()
+        profile.save()
+        messages.success(request, "Your membership has been cancelled.")
+        return redirect("my_membership")
+
+    context = {
+        "profile": profile,
+        # You can adjust these prices anytime:
+        "basic_price": 39,    # $39/month for facility only
+        "premium_price": 79,  # $79/month for facility + classes
+    }
+    return render(request, "members/my_membership.html", context)
+
+def logout_view(request):
+    """
+    Simple logout:
+    - Logs the user out
+    - Redirects to home
+    - Optionally shows a flash message.
+    """
+    if request.user.is_authenticated:
+        logout(request)
+        messages.success(request, "You have been logged out.")
+    return redirect("home")
+
+

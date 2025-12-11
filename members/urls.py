@@ -3,6 +3,7 @@ from . import views
 from django.urls import path, include
 from members import views as members_views
 
+
 urlpatterns = [
     path("", views.home, name="home"),  # /
     path("product/<int:pk>/", views.product_detail, name="product_detail"),
@@ -20,4 +21,8 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),  
     # sign up
     path("accounts/signup/", members_views.signup, name="signup"),
+
+    path("my-orders/", views.my_orders, name="my_orders"),
+    path("my-orders/<int:pk>/", views.my_order_detail, name="my_order_detail"),
+     path("my-membership/", views.my_membership, name="my_membership"),
 ]

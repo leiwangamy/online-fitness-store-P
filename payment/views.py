@@ -1,9 +1,8 @@
 from decimal import Decimal
-
+from django.db import transaction
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-
-from members.models import Product   # Product model lives in members app
+from members.models import Product, Order, OrderItem
 
 
 @login_required
@@ -40,10 +39,6 @@ def checkout(request):
         # e.g. "stock", "inventory", "quantity", etc.
         stock = getattr(product, "STOCK_FIELD_NAME", None)
 
-        # If your model has no stock field at all, you can just set:
-        # stock = None
-        # and the over-quantity check will be skipped.
-
         if stock is not None and qty > stock:
             insufficient_items.append(
                 {
@@ -68,25 +63,90 @@ def checkout(request):
     TAX_RATE = Decimal("0.05")
     tax = (subtotal * TAX_RATE).quantize(Decimal("0.01"))
 
-    # --- Shipping rules (simple demo) ---
+    # --- Shipping rules (combined logic) ---
+    # 1) Shipping only for physical products:
+    #    physical = not is_digital and not is_service
+    has_physical_item = any(
+        (not item["product"].is_digital) and (not item["product"].is_service)
+        for item in items
+    )
+
     if subtotal == 0:
         shipping = Decimal("0.00")
-        shipping_label = "No shipping"
-    elif subtotal >= 50:
+        shipping_label = "No shipping (empty cart)"
+    elif not has_physical_item:
+        # Only digital/service products → no shipping
         shipping = Decimal("0.00")
-        shipping_label = "Free shipping for orders over $50"
+        shipping_label = "No shipping (digital / service products only)"
     else:
-        shipping = Decimal("5.00")
-        shipping_label = "Flat $5 shipping"
+        # There is at least one physical product
+        if subtotal >= Decimal("100.00"):
+            shipping = Decimal("0.00")
+            shipping_label = "Free shipping for physical orders over $100"
+        else:
+            shipping = Decimal("15.00")
+            shipping_label = "Flat $15 shipping for physical products"
 
     total = (subtotal + tax + shipping).quantize(Decimal("0.01"))
 
-    # If user clicks "Place Order (demo)"
+        # If user clicks "Place Order"
     if request.method == "POST" and not insufficient_items:
-        # here is where real payment integration would go
-        # for now we just clear the cart and redirect to a success page
-        request.session["cart"] = {}
+        # In a real app you'd verify payment here.
+        with transaction.atomic():
+            # 1) Create the Order
+            order = Order.objects.create(
+                user=request.user,
+                status="paid",   # for now, assume successful payment
+                subtotal=subtotal,
+                tax=tax,
+                shipping=shipping,
+                total=total,
+            )
+
+            # 2) Create OrderItems and adjust inventory
+            for item in items:
+                product = item["product"]
+                qty = item["quantity"]
+                line_price = item["line_total"] / qty  # unit price at purchase
+
+                # Save the line in OrderItem
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=qty,
+                    price=line_price,
+                )
+
+                # Adjust inventory based on product type
+                if product.is_digital:
+                    # Digital: no stock change
+                    continue
+
+                if product.is_service:
+                    # Limited seats only
+                    if product.service_seats is not None:
+                        new_seats = product.service_seats - qty
+                        if new_seats < 0:
+                            new_seats = 0  # safety
+                        product.service_seats = new_seats
+                        product.save(update_fields=["service_seats"])
+                    continue
+
+                # Physical products
+                current_stock = getattr(product, "quantity_in_stock", None)
+                if current_stock is not None:
+                    new_stock = current_stock - qty
+                    if new_stock < 0:
+                        new_stock = 0  # safety
+                    product.quantity_in_stock = new_stock
+                    product.save(update_fields=["quantity_in_stock"])
+
+            # 3) Clear cart after successful "payment"
+            request.session["cart"] = {}
+
+        # You can pass order id to success page later if you want
         return redirect("payment:success")
+
 
     context = {
         "empty": False,

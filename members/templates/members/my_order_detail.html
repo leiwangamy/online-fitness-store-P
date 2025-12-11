@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Order #{{ order.id }}</h1>
+
+<p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+<p><strong>Status:</strong> {{ order.get_status_display }}</p>
+<p><strong>Total:</strong> ${{ order.total }}</p>
+
+<h3>Shipping</h3>
+<p>
+    <strong>Carrier:</strong>
+    {% if order.shipping_carrier %}
+        {{ order.get_shipping_carrier_display }}
+    {% else %}
+        Not applicable
+    {% endif %}
+    <br>
+    <strong>Tracking number:</strong>
+    {% if order.tracking_number %}
+        {{ order.tracking_number }}
+    {% else %}
+        -
+    {% endif %}
+</p>
+
+<h3>Items</h3>
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Price (each)</th>
+        <th>Line total</th>
+    </tr>
+    {% for item in order.items.all %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.price }}</td>
+            <td>${{ item.price|floatformat:2|add:"0"|floatformat:2|add:"0" }}{% comment %}just simple display{% endcomment %}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<p style="margin-top:20px;">
+    <a href="{% url 'my_orders' %}">&larr; Back to My Orders</a>
+</p>
+
+{% endblock %}
