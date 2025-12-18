@@ -85,3 +85,7 @@ class ProfileForm(forms.ModelForm):
         model = MemberProfile
         fields = ("phone", "address1", "address2", "city", "province", "postal_code", "country")
 
+class AddressForm(forms.ModelForm):
+    class Meta:
+        model = MemberProfile
+        fields = ["phone", "address1", "address2", "city", "province", "postal_code", "country"]

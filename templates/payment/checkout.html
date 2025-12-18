@@ -1,131 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Checkout</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #d8f3dc;  /* same light green as home/cart */
-        }
+{% extends "base.html" %}
 
-        h1 {
-            margin-bottom: 10px;
-        }
+{% block title %}Checkout{% endblock %}
 
-        table {
-            border-collapse: collapse;
-            width: 80%;
-            max-width: 900px;
-            background: #fff;
-        }
+{% block extra_css %}
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background-color: #d8f3dc; }
+  table { border-collapse: collapse; width: 80%; max-width: 900px; background: #fff; }
+  th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
+  th { background-color: #f0f0f0; }
+  .totals { margin-top: 20px; font-size: 1.05rem; }
+  .totals p { margin: 4px 0; }
+  .warning { color: red; font-weight: bold; margin: 15px 0; }
+  .buttons { margin-top: 20px; }
+  .buttons a, .buttons button { margin-right: 15px; padding: 8px 16px; font-size: 1rem; }
+</style>
+{% endblock %}
 
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px 10px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f0f0f0;
-        }
-
-        .totals {
-            margin-top: 20px;
-            font-size: 1.05rem;
-        }
-
-        .totals p {
-            margin: 4px 0;
-        }
-
-        .warning {
-            color: red;
-            font-weight: bold;
-            margin: 15px 0;
-        }
-
-        .buttons {
-            margin-top: 20px;
-        }
-
-        .buttons a,
-        .buttons button {
-            margin-right: 15px;
-            padding: 8px 16px;
-            font-size: 1rem;
-        }
-    </style>
-</head>
-<body>
-
+{% block content %}
 <h1>Checkout</h1>
 
 {% if empty %}
-    <p>Your cart is empty.</p>
-    <p><a href="{% url 'home' %}">Continue Shopping</a></p>
-
+  <p>Your cart is empty.</p>
+  <p><a href="{% url 'home' %}">Continue Shopping</a></p>
 {% else %}
 
-    {# --- Stock problems (over-quantity) --- #}
-    {% if insufficient_items %}
-        <div class="warning">
-            Some items are not available in the requested quantity.
-            Please go back to your cart and change the quantities.
-        </div>
-        <ul class="warning">
-            {% for i in insufficient_items %}
-                <li>
-                    {{ i.product.name }} – requested: {{ i.requested }},
-                    available: {{ i.available }}
-                </li>
-            {% endfor %}
-        </ul>
+<form method="post">
+  {% csrf_token %}
+
+  <h2>Confirm Shipping Address</h2>
+
+  <label>
+    <input type="checkbox" name="use_account_address" checked>
+    Use my account address (default)
+  </label>
+
+  <a class="btn btn-sm" href="{% url 'address_edit' %}?next={{ request.path }}">
+    Edit address
+</a>
+
+  <hr>
+
+  {{ form.as_p }}
+
+  {% if insufficient_items %}
+    <div class="warning">
+      Some items are not available in the requested quantity.
+      Please go back to your cart and change the quantities.
+    </div>
+    <ul class="warning">
+      {% for i in insufficient_items %}
+        <li>{{ i.product.name }} – requested: {{ i.requested }}, available: {{ i.available }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <h2>Order Summary</h2>
+  <table>
+    <tr>
+      <th>Product</th>
+      <th>Quantity</th>
+      <th>Line Total</th>
+    </tr>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.product.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>${{ item.line_total }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  <div class="totals">
+    <p>Subtotal: <strong>${{ subtotal }}</strong></p>
+    <p>GST/HST (5%): <strong>${{ tax }}</strong></p>
+    <p>Shipping: <strong>${{ shipping }}</strong> ({{ shipping_label }})</p>
+    <p><strong>Total: ${{ total }}</strong></p>
+  </div>
+
+  <div class="buttons">
+    {% if not insufficient_items %}
+      <button type="submit" name="action" value="place_order">Place Order (demo)</button>
+    {% else %}
+      <a href="{% url 'cart_detail' %}">Go back to Cart and adjust quantities</a>
     {% endif %}
 
-    {# --- Order summary table --- #}
-    <h2>Order Summary</h2>
-    <table>
-        <tr>
-            <th>Product</th>
-            <th>Quantity</th>
-            <th>Line Total</th>
-        </tr>
-        {% for item in items %}
-            <tr>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>${{ item.line_total }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+    <a href="{% url 'home' %}">Continue Shopping</a>
+    <a href="{% url 'cart_detail' %}">Back to Cart</a>
+  </div>
 
-    {# --- Totals --- #}
-    <div class="totals">
-        <p>Subtotal: <strong>${{ subtotal }}</strong></p>
-        <p>GST/HST (5%): <strong>${{ tax }}</strong></p>
-        <p>Shipping: <strong>${{ shipping }}</strong> ({{ shipping_label }})</p>
-        <p><strong>Total: ${{ total }}</strong></p>
-    </div>
-
-    <div class="buttons">
-        {% if not insufficient_items %}
-            {# Only allow placing order when stock is OK #}
-            <form method="post" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit">Place Order (demo)</button>
-            </form>
-        {% else %}
-            {# Stock problem: no submit button, just links #}
-            <a href="{% url 'cart_detail' %}">Go back to Cart and adjust quantities</a>
-        {% endif %}
-
-        <a href="{% url 'home' %}">Continue Shopping</a>
-        <a href="{% url 'cart_detail' %}">Back to Cart</a>
-    </div>
+</form>
 
 {% endif %}
-
-</body>
-</html>
+{% endblock %}

@@ -11,6 +11,8 @@ from .models import Product, Category, Order, MemberProfile
 from datetime import timedelta
 from django.contrib import messages
 from .forms import AccountEmailForm, ProfileForm
+from .forms import AddressForm
+
 
 
 def product_list(request):
@@ -316,7 +318,7 @@ def logout_view(request):
 @login_required
 def account_settings(request):
     user = request.user
-    profile = user.profile  # thanks to related_name="profile"
+    profile, _ = MemberProfile.objects.get_or_create(user=user)
 
     if request.method == "POST":
         email_form = AccountEmailForm(request.POST, instance=user)
@@ -338,24 +340,31 @@ def account_settings(request):
 
 
 
+
 @login_required
-def account_profile(request):
-    # If you already have a profile auto-created, use request.user.memberprofile
+def address_edit(request):
     profile, _ = MemberProfile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        form = ProfileForm(request.POST, instance=profile)
+        form = AddressForm(request.POST, instance=profile)
         if form.is_valid():
-            form.save()
-            return redirect("account_profile")
-        edit_mode = True
+            obj = form.save(commit=False)
+            obj.user = request.user
+            obj.save()
+            next_url = request.POST.get("next") or request.GET.get("next") or "account_profile"
+            return redirect(next_url)
     else:
-        form = ProfileForm(instance=profile)
-        edit_mode = request.GET.get("edit") == "1"
+        form = AddressForm(instance=profile)
+
+    return render(request, "members/address_edit.html", {"form": form, "next": request.GET.get("next", "")})
+
+
+@login_required
+def account_profile(request):
+    # Ensure the profile exists for this user
+    profile, _ = MemberProfile.objects.get_or_create(user=request.user)
 
     return render(request, "members/account_profile.html", {
-        "profile": profile,
-        "form": form,
-        "edit_mode": edit_mode,
+        "profile": profile
     })
 

@@ -3,7 +3,7 @@
 from django.urls import path
 from . import views
 
-app_name = "payment"   # so we can use {% url 'payment:checkout' %}
+app_name = "payment"
 
 urlpatterns = [
     path("", views.checkout, name="checkout"),          # /payment/
