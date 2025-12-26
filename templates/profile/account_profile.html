@@ -14,7 +14,7 @@
     <p><strong>Postal code:</strong> {{ profile.postal_code|default:"-" }}</p>
     <p><strong>Country:</strong> {{ profile.country|default:"-" }}</p>
 
-    <a href="{% url 'address_edit' %}?next={{ request.path }}">Edit</a>
+    <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}">Edit Address</a>
 
   </div>
 
@@ -23,7 +23,7 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Save</button>
-    <a class="btn" href="{% url 'account_profile' %}">Cancel</a>
+    <a class="btn" href="{% url 'profiles:account_profile' %}">Cancel</a>
   </form>
 {% endif %}
 {% endblock %}

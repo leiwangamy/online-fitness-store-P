@@ -57,9 +57,7 @@
             {% for order in orders %}
             <tr>
                 <td>
-                    <a href="{% url 'my_order_detail' order.id %}">
-                        {{ order.id }}
-                    </a>
+                    <a href="{% url 'orders:my_order_detail' order.id %}">{{ order.id }}</a>
                 </td>
                 <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
                 <td>{{ order.get_status_display }}</td>

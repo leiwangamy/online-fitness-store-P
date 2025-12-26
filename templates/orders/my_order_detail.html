@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Order #{{ order.id }}</h1>
+
+{# ---------------- Digital downloads section ---------------- #}
+{% if order.downloads.exists %}
+  <h3>Digital Downloads</h3>
+  <div style="background: #e8f5e9; padding: 15px; border: 1px solid #4caf50; border-radius: 5px; margin-bottom: 20px;">
+    <p style="margin-top: 0;">You can download your digital products below:</p>
+    <ul style="list-style: none; padding-left: 0;">
+      {% for dl in order.downloads.all %}
+        <li style="padding: 10px; margin-bottom: 10px; background: white; border-radius: 4px; border: 1px solid #ddd;">
+          <strong>{{ dl.product.name }}</strong>
+          {% if dl.is_valid %}
+            <br>
+            <a href="{% url 'orders:digital_download' dl.token %}" 
+               style="display: inline-block; margin-top: 8px; padding: 8px 16px; background: #4caf50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+              ⬇ Download Now
+            </a>
+            <br>
+            <span style="color: #666; font-size: 0.85rem; display: block; margin-top: 8px;">
+              {% if dl.max_downloads and dl.max_downloads > 0 %}
+                ({{ dl.download_count }}/{{ dl.max_downloads }} downloads remaining)
+              {% else %}
+                Download anytime before expiration
+              {% endif %}
+              <br>
+              Expires: {{ dl.expires_at|date:"Y-m-d H:i" }}
+            </span>
+          {% else %}
+            <br>
+            <span style="color: #d32f2f; font-weight: bold;">
+              ⚠ Expired or download limit reached
+            </span>
+            <span style="color: #666; font-size: 0.9rem;">
+              ({{ dl.download_count }}/{{ dl.max_downloads|default:"∞" }} downloads used)
+            </span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% else %}
+  {# Check if order has digital products but no download records yet #}
+  {% for item in order.items.all %}
+    {% if item.product.is_digital and forloop.first %}
+      <div style="background: #fff3cd; padding: 15px; border: 1px solid #ffc107; border-radius: 5px; margin-bottom: 20px;">
+        <p style="margin: 0; color: #856404;">
+          <strong>Note:</strong> Digital download links are being prepared. 
+          Please check back in a few moments or contact support if this message persists.
+        </p>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<hr>
+
+<p><strong>Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+<p><strong>Status:</strong> {{ order.get_status_display }}</p>
+
+<h3>Shipping Address</h3>
+<div style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 5px; max-width: 500px; line-height: 1.8;">
+  {% if order.ship_name %}<strong>{{ order.ship_name }}</strong><br>{% endif %}
+  {% if order.ship_phone %}Phone: {{ order.ship_phone }}<br>{% endif %}
+  {% if order.ship_address1 %}{{ order.ship_address1 }}<br>{% endif %}
+  {% if order.ship_address2 %}{{ order.ship_address2 }}<br>{% endif %}
+  {% if order.ship_city or order.ship_province or order.ship_postal_code %}
+    {% if order.ship_city %}{{ order.ship_city }}{% endif %}
+    {% if order.ship_province %}, {{ order.ship_province }}{% endif %}
+    {% if order.ship_postal_code %} {{ order.ship_postal_code }}{% endif %}
+    <br>
+  {% endif %}
+  {% if order.ship_country %}{{ order.ship_country }}{% endif %}
+  {% if not order.ship_name and not order.ship_address1 %}
+    <p style="color: #666; font-style: italic;">No shipping address on file.</p>
+  {% endif %}
+</div>
+
+<h3>Shipping Information</h3>
+<p>
+  <strong>Carrier:</strong>
+  {% if order.shipping_carrier %}
+    {{ order.get_shipping_carrier_display }}
+  {% else %}
+    Not set
+  {% endif %}
+  <br>
+  <strong>Tracking number:</strong>
+  {% if order.tracking_number %}
+    {{ order.tracking_number }}
+  {% else %}
+    -
+  {% endif %}
+</p>
+
+<h3>Items</h3>
+<table border="1" cellpadding="8" cellspacing="0">
+  <tr>
+    <th>Product</th>
+    <th>Quantity</th>
+    <th>Price (each)</th>
+    <th>Line total</th>
+  </tr>
+
+  {% for item in order.items.all %}
+    <tr>
+      <td>{{ item.product.name }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>${{ item.price|floatformat:2 }}</td>
+      <td>${{ item.subtotal|floatformat:2 }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">No items.</td></tr>
+  {% endfor %}
+</table>
+
+<h3>Order Summary</h3>
+<div style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 5px; max-width: 400px;">
+  <p><strong>Subtotal:</strong> ${{ order.subtotal|floatformat:2 }}</p>
+  <p><strong>GST/HST (5%):</strong> ${{ order.tax|floatformat:2 }}</p>
+  <p><strong>Shipping:</strong> ${{ order.shipping|floatformat:2 }}</p>
+  <p style="font-size: 1.1rem; margin-top: 10px; padding-top: 10px; border-top: 2px solid #ccc;">
+    <strong>Total:</strong> ${{ order.total|floatformat:2 }}
+  </p>
+</div>
+
+<p style="margin-top:20px;">
+  <a href="{% url 'orders:my_orders' %}">&larr; Back to My Orders</a>
+</p>
+
+{% endblock %}

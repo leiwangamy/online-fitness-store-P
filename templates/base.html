@@ -3,32 +3,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Fitness Club{% endblock %}</title>
 
   {% block extra_css %}{% endblock %}
 
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #d8f3dc; }
-    nav { display: flex; justify-content: space-between; align-items: center; }
-    nav a { margin-right: 15px; font-weight: bold; }
-    .account-area { background: #eee; padding: 6px 10px; border-radius: 5px; }
-    .logout-link-button { background:none; border:none; padding:0; margin:0; font:inherit; color:#0000ee; text-decoration:underline; cursor:pointer; }
-    .logout-link-button:hover { color:#551a8b; }
-    h1 { margin-bottom: 10px; }
+    * {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0;
+      padding: 15px;
+      background-color: #d8f3dc;
+      font-size: 16px;
+      line-height: 1.5;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    
+    nav { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    nav a { 
+      font-weight: bold;
+      font-size: 15px;
+      text-decoration: none;
+      color: #0066cc;
+    }
+    
+    nav a:hover {
+      text-decoration: underline;
+    }
+    
+    .account-area { 
+      background: #eee; 
+      padding: 8px 12px; 
+      border-radius: 5px;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    
+    .logout-link-button { 
+      background:none; 
+      border:none; 
+      padding:0; 
+      margin:0; 
+      font:inherit; 
+      color:#0000ee; 
+      text-decoration:underline; 
+      cursor:pointer; 
+    }
+    
+    .logout-link-button:hover { 
+      color:#551a8b; 
+    }
+    
+    h1 { 
+      margin-bottom: 15px;
+      font-size: 2rem;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+    
+    h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .nav-links {
+        width: 100%;
+        flex-direction: column;
+      }
+      
+      .account-area {
+        width: 100%;
+      }
+      
+      h1 {
+        font-size: 1.5rem;
+      }
+      
+      h2 {
+        font-size: 1.3rem;
+      }
+    }
   </style>
 </head>
 
 <body>
+<div class="container">
 <nav class="top-nav">
   <div class="nav-links">
-    <a href="{% url 'home' %}">Home</a>
-    <a href="{% url 'cart_detail' %}">Cart</a>
+    <a href="{% url 'home:home' %}">Home</a>
+    <a href="{% url 'cart:cart_detail' %}">Cart</a>
 
     {% if user.is_authenticated %}
-      <a href="{% url 'my_orders' %}">My Orders</a>
-      <a href="{% url 'my_membership' %}">My Membership</a>
-      <a href="{% url 'account_profile' %}">Account</a>
-      <a href="{% url 'address_edit' %}">Edit Address</a>
+      <a href="{% url 'orders:my_orders' %}">My Orders</a>
+      <a href="{% url 'members:my_membership' %}">My Membership</a>
+      <a href="{% url 'profiles:account_profile' %}">Account</a>
+      
     {% else %}
       <a href="{% url 'account_login' %}">Login</a>
       <a href="{% url 'account_signup' %}">Sign Up</a>
@@ -40,7 +149,7 @@
   <div class="account-area">
     {% if user.is_authenticated %}
       👤 You are logged in as <strong>{{ user.username }}</strong>.
-      <form action="{% url 'account_logout' %}" method="post" style="display:inline;">
+      <form action="{% url 'accounts:account_logout' %}" method="post" style="display:inline;">
         {% csrf_token %}
         <button type="submit" class="logout-link-button">Logout</button>
       </form>
@@ -54,5 +163,6 @@
 <hr>
 
 {% block content %}{% endblock %}
+</div>
 </body>
 </html>

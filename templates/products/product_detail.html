@@ -301,7 +301,7 @@
         {% if product.service_seats is not None and product.service_seats <= 0 %}
             <button type="button" disabled style="margin-top:10px;">Unavailable</button>
         {% else %}
-            <form action="{% url 'add_to_cart' product.id %}" method="post" style="margin-top:10px;">
+            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" style="margin-top:10px;">
                 {% csrf_token %}
                 <input type="hidden" name="quantity" value="1">
                 <button type="submit">Book this class</button>
@@ -310,7 +310,7 @@
 
     {% elif product.is_digital %}
         {# Digital: one download per order #}
-        <form action="{% url 'add_to_cart' product.id %}" method="post" style="margin-top:10px;">
+        <form action="{% url 'cart:add_to_cart' product.id %}" method="post" style="margin-top:10px;">
             {% csrf_token %}
             <input type="hidden" name="quantity" value="1">
             <button type="submit">Add to Cart</button>
@@ -319,7 +319,7 @@
     {% else %}
         {# Physical product #}
         {% if product.quantity_in_stock > 0 %}
-            <form action="{% url 'add_to_cart' product.id %}" method="post" style="margin-top:10px;">
+            <form action="{% url 'cart:add_to_cart' product.id %}" method="post" style="margin-top:10px;">
                 {% csrf_token %}
                 <label for="quantity">Quantity:</label>
                 <input type="number"
