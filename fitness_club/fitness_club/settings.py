@@ -157,15 +157,12 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Modern allauth settings (Django 5+)
-# New recommended way (Django 5+)
-ACCOUNT_LOGIN_METHODS = {'email'}  # Use email for authentication
+# Note: Some settings show deprecation warnings but are needed for compatibility
+ACCOUNT_AUTHENTICATION_METHOD = "email"  # Use email for authentication
+ACCOUNT_EMAIL_REQUIRED = True  # Required when using email authentication
 ACCOUNT_UNIQUE_EMAIL = True  # Required when login isn't username-only
+ACCOUNT_USERNAME_REQUIRED = False  # Username not required when using email
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
-
-# Deprecated settings (kept for backward compatibility, but not needed)
-# ACCOUNT_AUTHENTICATION_METHOD = "email"  # Deprecated: use ACCOUNT_LOGIN_METHODS
-# ACCOUNT_EMAIL_REQUIRED = True  # Deprecated: handled by ACCOUNT_SIGNUP_FIELDS
-# ACCOUNT_USERNAME_REQUIRED = False  # Deprecated: handled by ACCOUNT_SIGNUP_FIELDS
 
 # Custom adapter to ensure username is set to email
 ACCOUNT_ADAPTER = "accounts.adapters.CustomAccountAdapter"
