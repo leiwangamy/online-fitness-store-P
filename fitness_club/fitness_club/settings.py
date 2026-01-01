@@ -165,15 +165,35 @@ LOGOUT_REDIRECT_URL = "/"
 # ------------------------------------------------------------
 # Email
 # ------------------------------------------------------------
-DEFAULT_FROM_EMAIL = "Fitness Club <no-reply@fitnessclub.test>"
+import os
 
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL",
+    "Fitness Club <no-reply@lwsoc.com>"
+)
+
+# Always enforce verification rules (recommended)
+ACCOUNT_EMAIL_VERIFICATION = os.environ.get("ACCOUNT_EMAIL_VERIFICATION", "mandatory")
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+# Choose backend based on DEBUG
 if DEBUG:
+    # Dev: print emails to console (you'll see the verification link in logs)
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-    ACCOUNT_EMAIL_VERIFICATION = "none"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-    ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+    EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False").lower() == "true"
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+    if EMAIL_USE_TLS and EMAIL_USE_SSL:
+        raise ValueError("Only one of EMAIL_USE_TLS or EMAIL_USE_SSL can be True.")
+
+
 
 # ------------------------------------------------------------
 # Password validation
