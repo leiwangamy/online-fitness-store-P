@@ -165,8 +165,6 @@ LOGOUT_REDIRECT_URL = "/"
 # ------------------------------------------------------------
 # Email
 # ------------------------------------------------------------
-import os
-
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     "Fitness Club <no-reply@lwsoc.com>"
