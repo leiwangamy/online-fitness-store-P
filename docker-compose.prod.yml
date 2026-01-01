@@ -41,7 +41,7 @@ services:
       gunicorn fitness_club.fitness_club.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
       "
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/').read()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/').read()"]
       interval: 30s
       timeout: 10s
       retries: 3
