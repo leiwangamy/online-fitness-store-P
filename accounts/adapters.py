@@ -54,14 +54,25 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     
     def is_email_verified(self, request, email):
         """
-        Override to allow login without email verification when ACCOUNT_EMAIL_VERIFICATION is "optional".
-        This ensures users can sign in even if they haven't verified their email.
+        Override to allow login without email verification for existing users,
+        but require verification for new signups.
+        
+        - During SIGNUP: Email verification is mandatory (user must verify)
+        - During LOGIN: Email verification is optional (existing users can log in)
         """
-        # If email verification is optional, always return True to allow login
-        # The parent method will still check actual verification status for other purposes
-        from allauth.account import app_settings
-        if app_settings.EMAIL_VERIFICATION == app_settings.EmailVerificationMethod.OPTIONAL:
+        from allauth.account.models import EmailAddress
+        from django.contrib.auth import get_user_model
+        
+        User = get_user_model()
+        
+        # Check if this is a login attempt (user already exists)
+        try:
+            user = User.objects.get(email=email)
+            # User exists - this is a login attempt, allow login without verification
+            # Existing users can always log in, even if email isn't verified
             return True
-        # For mandatory verification, use parent behavior
-        return super().is_email_verified(request, email)
+        except User.DoesNotExist:
+            # User doesn't exist - this is a signup attempt
+            # For new signups, require email verification (use parent method)
+            return super().is_email_verified(request, email)
 

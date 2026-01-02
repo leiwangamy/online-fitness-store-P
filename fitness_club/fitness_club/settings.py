@@ -181,9 +181,9 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 )
 
 # Email verification settings
-# "optional" = email verification is sent but not required for login
-# Users can sign in with just email and password
-ACCOUNT_EMAIL_VERIFICATION = os.environ.get("ACCOUNT_EMAIL_VERIFICATION", "optional")
+# "mandatory" = email verification required for new signups
+# We override is_email_verified() in adapter to allow login without verification for existing users
+ACCOUNT_EMAIL_VERIFICATION = os.environ.get("ACCOUNT_EMAIL_VERIFICATION", "mandatory")
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = "/"  # Redirect to home after email confirmation
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = "/"  # Redirect to home if already logged in

@@ -1,6 +1,78 @@
 {% extends "base.html" %}
 {% block title %}My Profile{% endblock %}
 
+{% block extra_css %}
+<style>
+  .profile-view {
+    max-width: 600px;
+    margin: 20px 0;
+  }
+
+  .profile-view p {
+    font-size: 1.1rem;
+    margin: 12px 0;
+    color: #333;
+  }
+
+  .profile-view strong {
+    color: #2d6a4f;
+    min-width: 120px;
+    display: inline-block;
+  }
+
+  .profile-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .profile-actions a {
+    display: inline-block;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: all 0.3s;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .profile-actions a.password-reset {
+    background: #0066cc;
+    color: white;
+  }
+
+  .profile-actions a.password-reset:hover {
+    background: #0052a3;
+    text-decoration: none;
+  }
+
+  .profile-actions a.delete-account {
+    background: #dc3545;
+    color: white;
+  }
+
+  .profile-actions a.delete-account:hover {
+    background: #c82333;
+    text-decoration: none;
+  }
+
+  .profile-actions a.edit-address {
+    background: #2d6a4f;
+    color: white;
+  }
+
+  .profile-actions a.edit-address:hover {
+    background: #1b4332;
+    text-decoration: none;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>My Profile</h1>
 
@@ -14,7 +86,11 @@
     <p><strong>Postal code:</strong> {{ profile.postal_code|default:"-" }}</p>
     <p><strong>Country:</strong> {{ profile.country|default:"-" }}</p>
 
-    <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}">Edit Address</a>
+    <div class="profile-actions">
+      <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}" class="edit-address">Edit Address</a>
+      <a href="{% url 'accounts:password_change' %}" class="password-reset">Change Password</a>
+      <a href="{% url 'accounts:delete_account' %}" class="delete-account">Delete Account</a>
+    </div>
 
   </div>
 
