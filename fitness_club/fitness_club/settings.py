@@ -169,7 +169,7 @@ ACCOUNT_ADAPTER = "accounts.adapters.CustomAccountAdapter"
 
 # Redirects
 LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/orders/"
 LOGOUT_REDIRECT_URL = "/"
 
 # ------------------------------------------------------------

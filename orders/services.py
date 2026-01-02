@@ -1,4 +1,5 @@
 from datetime import timedelta
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -50,24 +51,28 @@ def create_downloads_and_email(request, order, days_valid=7, max_downloads=0):
     if not to_email:
         return
 
-    # Build order detail URL using Site framework (includes port :8000)
-    from django.contrib.sites.models import Site
-    site = Site.objects.get_current()
+    # 1) Build the specific order page URL (this is what you want!)
     order_path = reverse("orders:my_order_detail", args=[order.id])
-    
-    if site.domain:
-        # site.domain should be like "ec2-15-223-56-68.ca-central-1.compute.amazonaws.com:8000"
-        protocol = 'https' if request.is_secure() else 'http'
-        order_url = f"{protocol}://{site.domain}{order_path}"
-    else:
-        # Fallback to request.build_absolute_uri if site domain not set
-        order_url = request.build_absolute_uri(order_path)
+
+    # Optional: add a query param so you can highlight the downloads section
+    order_path = f"{order_path}?highlight=downloads"
+
+    # 2) Build a login URL that redirects to that order after login
+    login_path = reverse("account_login")
+    next_param = quote(order_path, safe="")  # safe="" so ? & = are encoded
+    login_path_with_next = f"{login_path}?next={next_param}"
+
+    # 3) Make absolute
+    # Best: request.build_absolute_uri(...) because it matches the real domain/protocol
+    order_url = request.build_absolute_uri(order_path)
+    login_url = request.build_absolute_uri(login_path_with_next)
 
     subject = f"Your digital downloads for Order #{order.id}"
     message = (
         "Thanks for your purchase!\n\n"
-        "Your digital items are ready.\n"
-        f"View your order to download:\n{order_url}\n"
+        "Open your order to download your digital items:\n\n"
+        f"{login_url}\n\n"
+        "If you're already signed in, it will go directly to your order page.\n"
     )
 
     send_mail(
