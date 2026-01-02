@@ -63,17 +63,12 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         """
         from allauth.account.models import EmailAddress
         from django.contrib.auth import get_user_model
+        from django.utils import timezone
+        from datetime import timedelta
         
         User = get_user_model()
         
-        # Check if this is a signup request by looking at the request path
-        is_signup_request = (
-            request.path == '/accounts/signup/' or 
-            '/accounts/signup' in request.path or
-            request.resolver_match and 'signup' in request.resolver_match.url_name
-        )
-        
-        # Check if user exists
+        # Check if user exists in database
         try:
             user = User.objects.get(email=email)
             
@@ -86,14 +81,25 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             except EmailAddress.DoesNotExist:
                 pass
             
-            # Email is not verified
-            if is_signup_request:
+            # Email is not verified - need to distinguish signup from login
+            # If user was just created (within last 10 seconds), it's likely a signup
+            user_just_created = (timezone.now() - user.date_joined) < timedelta(seconds=10)
+            
+            # Also check request path to be more certain
+            is_signup_path = (
+                request.path == '/accounts/signup/' or 
+                '/accounts/signup' in request.path or
+                (hasattr(request, 'resolver_match') and request.resolver_match and 
+                 'signup' in str(request.resolver_match.url_name))
+            )
+            
+            if user_just_created or is_signup_path:
                 # This is a signup attempt - require email verification
                 # Return False to prevent auto-login during signup
                 return False
             else:
-                # This is a login attempt - allow login without verification
-                # Existing users can log in even if email isn't verified
+                # This is a login attempt for an existing user
+                # Allow login without verification
                 return True
                 
         except User.DoesNotExist:
