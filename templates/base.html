@@ -179,7 +179,7 @@
   {% if messages %}
     <div class="toast-wrap" id="toastWrap">
       {% for message in messages %}
-        <div class="toast {{ message.tags|default:'info' }}" role="status" aria-live="polite">
+        <div class="toast {{ message.tags|default:'info' }}" role="status" aria-live="polite" data-message="{{ message|escape }}">
           <div class="toast-icon">
             {% if message.tags == 'success' %}✓
             {% elif message.tags == 'error' %}✕
@@ -244,7 +244,25 @@
         setTimeout(() => toast.remove(), 220);
       }
 
+      // Messages to hide (sign-in/sign-out/email confirmation)
+      const hiddenMessages = [
+        "Successfully signed in",
+        "signed out",
+        "You have confirmed"
+      ];
+
       wrap.querySelectorAll(".toast").forEach((toast) => {
+        const messageText = toast.querySelector(".toast-body")?.textContent || "";
+        const shouldHide = hiddenMessages.some(hidden => 
+          messageText.toLowerCase().includes(hidden.toLowerCase())
+        );
+
+        // Hide sign-in/sign-out messages immediately
+        if (shouldHide) {
+          toast.style.display = "none";
+          return;
+        }
+
         // close button
         const btn = toast.querySelector(".toast-close");
         if (btn) btn.addEventListener("click", () => dismissToast(toast));
