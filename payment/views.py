@@ -205,14 +205,27 @@ def checkout(request):
         is_pickup = fulfillment_method == "pickup"
         
         # Get pickup_location_id from cleaned_data or raw POST data
-        pickup_location_id = form_data.get("pickup_location_id") or request.POST.get("pickup_location_id")
-        if pickup_location_id and is_pickup:
-            try:
-                pickup_location = PickupLocation.objects.get(pk=pickup_location_id, is_active=True)
-            except (PickupLocation.DoesNotExist, ValueError, TypeError):
-                pickup_location = None
-        else:
-            pickup_location = None
+        pickup_location = None
+        if is_pickup:
+            pickup_location_id = form_data.get("pickup_location_id")
+            if not pickup_location_id:
+                # Fallback to raw POST data and convert to int
+                pickup_location_id_str = request.POST.get("pickup_location_id", "").strip()
+                if pickup_location_id_str:
+                    try:
+                        pickup_location_id = int(pickup_location_id_str)
+                    except (ValueError, TypeError):
+                        pickup_location_id = None
+            
+            if pickup_location_id:
+                try:
+                    pickup_location = PickupLocation.objects.get(pk=pickup_location_id, is_active=True)
+                except (PickupLocation.DoesNotExist, ValueError, TypeError):
+                    pickup_location = None
+                    # Log error for debugging
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Pickup location {pickup_location_id} not found or inactive for order")
         
         # Recalculate shipping based on pickup selection
         shipping, shipping_label = _calc_shipping(items, subtotal, is_pickup=is_pickup)
