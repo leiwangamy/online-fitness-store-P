@@ -190,8 +190,13 @@
     <h3>Select Pickup Location</h3>
     {% if pickup_locations %}
       <p>
-        <label for="id_pickup_location_id">{{ form.pickup_location_id.label }}:</label>
-        {{ form.pickup_location_id }}
+        <label for="id_pickup_location_id">Pickup Location:</label>
+        <select name="pickup_location_id" id="id_pickup_location_id" class="pickup-location-select">
+          <option value="">Select a pickup location</option>
+          {% for location in pickup_locations %}
+            <option value="{{ location.id }}">{{ location.name }}</option>
+          {% endfor %}
+        </select>
         {% if form.pickup_location_id.errors %}<span style="color: red;">{{ form.pickup_location_id.errors }}</span>{% endif %}
       </p>
       <div id="pickup-location-details" style="display: none;" class="pickup-location-info"></div>
@@ -230,10 +235,10 @@
   </table>
 
   <div class="totals">
-    <p>Subtotal: <strong>${{ subtotal }}</strong></p>
-    <p>GST/HST (5%): <strong>${{ tax }}</strong></p>
-    <p>Shipping: <strong>${{ shipping }}</strong> ({{ shipping_label }})</p>
-    <p><strong>Total: ${{ total }}</strong></p>
+    <p>Subtotal: <strong id="subtotal-display">${{ subtotal }}</strong></p>
+    <p>GST/HST (5%): <strong id="tax-display">${{ tax }}</strong></p>
+    <p>Shipping: <strong id="shipping-display">${{ shipping }}</strong> (<span id="shipping-label">{{ shipping_label }}</span>)</p>
+    <p><strong>Total: <span id="total-display">${{ total }}</span></strong></p>
   </div>
 
   <div class="buttons">
@@ -278,6 +283,39 @@ document.addEventListener('DOMContentLoaded', function() {
     {% endfor %}
   };
   
+  function updateShippingCost() {
+    const selectedMethod = document.querySelector('input[name="fulfillment_method"]:checked');
+    const subtotalEl = document.getElementById('subtotal-display');
+    const taxEl = document.getElementById('tax-display');
+    const shippingEl = document.getElementById('shipping-display');
+    const shippingLabelEl = document.getElementById('shipping-label');
+    const totalEl = document.getElementById('total-display');
+    
+    if (!subtotalEl || !taxEl || !shippingEl || !totalEl) return;
+    
+    // Extract numeric values from the original display
+    const subtotal = parseFloat('{{ subtotal }}');
+    const tax = parseFloat('{{ tax }}');
+    const originalShipping = parseFloat('{{ shipping }}');
+    const originalShippingLabel = '{{ shipping_label|escapejs }}';
+    
+    let shipping = originalShipping;
+    let shippingLabel = originalShippingLabel;
+    
+    // If pickup is selected, shipping is $0
+    if (selectedMethod && selectedMethod.value === 'pickup') {
+      shipping = 0;
+      shippingLabel = 'No shipping (pickup order)';
+    }
+    
+    const total = subtotal + tax + shipping;
+    
+    // Update display
+    shippingEl.textContent = '$' + shipping.toFixed(2);
+    if (shippingLabelEl) shippingLabelEl.textContent = shippingLabel;
+    totalEl.textContent = '$' + total.toFixed(2);
+  }
+  
   function toggleFulfillmentSections() {
     const selectedMethod = document.querySelector('input[name="fulfillment_method"]:checked');
     if (selectedMethod && selectedMethod.value === 'pickup') {
@@ -298,6 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (field) field.setAttribute('required', 'required');
       });
     }
+    // Update shipping cost when method changes
+    updateShippingCost();
   }
   
   function updatePickupDetails() {
@@ -329,7 +369,10 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Listen for fulfillment method changes
   fulfillmentRadios.forEach(radio => {
-    radio.addEventListener('change', toggleFulfillmentSections);
+    radio.addEventListener('change', function() {
+      toggleFulfillmentSections();
+      updateShippingCost();
+    });
   });
   
   // Listen for pickup location selection
