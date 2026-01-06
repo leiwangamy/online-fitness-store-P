@@ -163,12 +163,22 @@ def checkout(request):
             messages.error(request, "Some items are out of stock. Please adjust your cart.")
             return redirect("payment:checkout")
 
-        form = ShippingAddressForm(request.POST, pickup_locations=pickup_locations)
+        try:
+            form = ShippingAddressForm(request.POST, pickup_locations=pickup_locations)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error creating ShippingAddressForm with POST data: {e}")
+            form = ShippingAddressForm(request.POST)
+        
         if not form.is_valid():
             # Recalculate shipping based on form data (even if invalid, to show correct preview)
             is_pickup = form.data.get("fulfillment_method") == "pickup"
             shipping, shipping_label = _calc_shipping(items, subtotal, is_pickup=is_pickup)
             total = (subtotal + tax + shipping).quantize(Decimal("0.01"))
+            
+            # Convert queryset to list for template
+            pickup_locations_list = list(pickup_locations) if pickup_locations else []
             
             return render(
                 request,
@@ -183,7 +193,7 @@ def checkout(request):
                     "total": total,
                     "insufficient_items": insufficient_items,
                     "form": form,
-                    "pickup_locations": pickup_locations,
+                    "pickup_locations": pickup_locations_list,
                     "default_address": initial,
                 },
             )
@@ -332,7 +342,19 @@ def checkout(request):
     except Exception:
         profile = None
     
-    form = ShippingAddressForm(initial=initial, pickup_locations=pickup_locations)
+    # Create form with pickup locations
+    try:
+        form = ShippingAddressForm(initial=initial, pickup_locations=pickup_locations)
+    except Exception as e:
+        # Fallback if form creation fails
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error creating ShippingAddressForm: {e}")
+        form = ShippingAddressForm(initial=initial)
+    
+    # Convert queryset to list for template (safer for iteration)
+    pickup_locations_list = list(pickup_locations) if pickup_locations else []
+    
     return render(
         request,
         "payment/checkout.html",
@@ -348,7 +370,7 @@ def checkout(request):
             "form": form,
             "profile": profile,  # Pass profile to display default address
             "default_address": initial,  # Pass initial values for display
-            "pickup_locations": pickup_locations,  # Pass pickup locations for template
+            "pickup_locations": pickup_locations_list,  # Pass pickup locations as list for template
         },
     )
 

@@ -102,10 +102,23 @@ class ShippingAddressForm(forms.Form):
         pickup_locations = kwargs.pop('pickup_locations', None)
         super().__init__(*args, **kwargs)
         # Update queryset to get current active pickup locations
-        if pickup_locations is not None:
-            self.fields['pickup_location_id'].queryset = pickup_locations
-        else:
-            self.fields['pickup_location_id'].queryset = PickupLocation.objects.filter(is_active=True).order_by('display_order', 'name')
+        try:
+            if pickup_locations is not None:
+                # Ensure we have a queryset, not a list
+                if hasattr(pickup_locations, 'filter'):
+                    self.fields['pickup_location_id'].queryset = pickup_locations
+                else:
+                    # If it's a list, convert back to queryset
+                    self.fields['pickup_location_id'].queryset = PickupLocation.objects.filter(is_active=True).order_by('display_order', 'name')
+            else:
+                self.fields['pickup_location_id'].queryset = PickupLocation.objects.filter(is_active=True).order_by('display_order', 'name')
+        except (KeyError, AttributeError) as e:
+            # If field doesn't exist or there's an error, use default queryset
+            try:
+                self.fields['pickup_location_id'].queryset = PickupLocation.objects.filter(is_active=True).order_by('display_order', 'name')
+            except Exception:
+                # If PickupLocation doesn't exist, use empty queryset
+                self.fields['pickup_location_id'].queryset = PickupLocation.objects.none()
 
     # -------------------------
     # Validation
