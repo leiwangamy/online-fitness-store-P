@@ -148,13 +148,22 @@ class Product(models.Model):
         """
         Returns URL of main image if set, else first image URL, else None.
         Safe for templates: {{ product.main_image_url }}
+        Works efficiently with prefetched images.
         """
-        main = self.images.filter(is_main=True).first()
-        if main and main.image:
-            return main.image.url
-        first = self.images.first()
-        if first and first.image:
-            return first.image.url
+        # Get all images (works with both prefetched and non-prefetched)
+        # Using all() is safe - if prefetched, it uses cached data; otherwise queries DB
+        images = self.images.all()
+        
+        # Look for main image first
+        for img in images:
+            if img.is_main and img.image:
+                return img.image.url
+        
+        # If no main image, return first image
+        first_img = images.first()
+        if first_img and first_img.image:
+            return first_img.image.url
+        
         return None
 
     def __str__(self) -> str:

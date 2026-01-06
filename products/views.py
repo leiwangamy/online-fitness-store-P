@@ -13,7 +13,8 @@ def product_list(request):
     selected_category = request.GET.get("category", "").strip()
 
     categories = Category.objects.all()
-    products = Product.objects.filter(is_active=True).select_related("category")
+    # Prefetch images for efficient loading
+    products = Product.objects.filter(is_active=True).select_related("category").prefetch_related("images")
 
     if selected_category:
         products = products.filter(category__slug=selected_category)
@@ -25,10 +26,12 @@ def product_list(request):
     paginator = Paginator(products, 5)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(request, "members/product_list.html", {
+    return render(request, "home/home.html", {
         "page_obj": page_obj,
         "categories": categories,
         "selected_category": selected_category,
+        "search_query": "",  # No search on product list page
+        "total_products": products.count(),
     })
 
 
@@ -42,7 +45,8 @@ def home(request):
     selected_category = request.GET.get("category", "").strip()
     search_query = request.GET.get("q", "").strip()
 
-    products = Product.objects.filter(is_active=True).select_related("category")
+    # Prefetch images for efficient loading
+    products = Product.objects.filter(is_active=True).select_related("category").prefetch_related("images")
 
     if selected_category:
         products = products.filter(category__slug=selected_category)
@@ -57,11 +61,12 @@ def home(request):
 
     categories = Category.objects.all()
 
-    return render(request, "members/home.html", {
+    return render(request, "home/home.html", {
         "categories": categories,
         "selected_category": selected_category,
         "search_query": search_query,
         "page_obj": page_obj,
+        "total_products": products.count(),
     })
 
 
