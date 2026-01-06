@@ -421,11 +421,58 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Listen for pickup location selection
   if (pickupSelect) {
-    pickupSelect.addEventListener('change', updatePickupDetails);
+    pickupSelect.addEventListener('change', function() {
+      updatePickupDetails();
+      // Clear error when location is selected
+      if (pickupLocationError) {
+        pickupLocationError.style.display = 'none';
+      }
+      if (pickupSelect.style.border === '2px solid red') {
+        pickupSelect.style.border = '';
+      }
+    });
     // Update on page load if a location is already selected
     if (pickupSelect.value) {
       updatePickupDetails();
     }
+  }
+  
+  // Form validation before submission
+  const form = document.querySelector('form');
+  const placeOrderBtn = document.getElementById('place-order-btn');
+  const pickupLocationError = document.getElementById('pickup-location-error');
+  
+  if (form && placeOrderBtn) {
+    form.addEventListener('submit', function(e) {
+      const selectedMethod = document.querySelector('input[name="fulfillment_method"]:checked');
+      
+      // Check if pickup is selected but no location is chosen
+      if (selectedMethod && selectedMethod.value === 'pickup') {
+        const pickupSelectValue = pickupSelect ? pickupSelect.value : '';
+        if (!pickupSelectValue || pickupSelectValue === '') {
+          e.preventDefault(); // Prevent form submission
+          
+          // Show error message
+          if (pickupLocationError) {
+            pickupLocationError.style.display = 'block';
+            pickupLocationError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+          
+          // Highlight the pickup location dropdown
+          if (pickupSelect) {
+            pickupSelect.style.border = '2px solid red';
+            pickupSelect.focus();
+          }
+          
+          return false;
+        }
+      }
+      
+      // Hide error if validation passes
+      if (pickupLocationError) {
+        pickupLocationError.style.display = 'none';
+      }
+    });
   }
 });
 </script>
