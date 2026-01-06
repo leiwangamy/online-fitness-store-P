@@ -54,7 +54,8 @@ services:
     container_name: fitness_nginx_prod
     restart: unless-stopped
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     ports:
       - "80:80"
       - "443:443"
@@ -64,8 +65,6 @@ services:
       - ./media:/app/media:ro  # If you have media files
       # Mount SSL certificates (adjust path if your certs are elsewhere)
       - /etc/letsencrypt:/etc/letsencrypt:ro
-    networks:
-      - default
 
 volumes:
   postgres_data:
