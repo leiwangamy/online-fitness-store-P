@@ -68,6 +68,12 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ("=id", "user__username", "user__email", "tracking_number")
     inlines = (OrderItemInline,)
     actions = [export_orders_csv]
+    list_select_related = ("user", "pickup_location")
+    
+    def get_queryset(self, request):
+        """Optimize queryset for list view"""
+        qs = super().get_queryset(request)
+        return qs.select_related("user", "pickup_location")
 
     readonly_fields = (
         "shipping_full_admin",
