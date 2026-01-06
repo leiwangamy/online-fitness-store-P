@@ -1,3 +1,20 @@
+"""
+Product Models Module
+
+This module defines the core product models for the e-commerce platform:
+- Category: Product categories for organization
+- Product: Main product model supporting physical, digital, and service products
+- ProductImage: Product image management with main image support
+
+Key Features:
+- Support for three product types: physical, digital, and service
+- Inventory management for physical products
+- Digital file/URL support for digital products
+- Service booking with seat management
+- Tax calculation (GST/PST)
+- Product image management with main image selection
+"""
+
 from decimal import Decimal
 
 from django.db import models
@@ -9,6 +26,19 @@ from django.conf import settings
 #  CATEGORY
 # =========================
 class Category(models.Model):
+    """
+    Product Category Model
+    
+    Organizes products into categories. Each product can belong to one category.
+    Categories are used for filtering and organizing products on the storefront.
+    
+    Attributes:
+        name: Category name (unique)
+        slug: URL-friendly identifier (unique, auto-generated from name)
+    
+    Example:
+        Category: "Yoga Equipment", "Digital Downloads", "Fitness Classes"
+    """
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
 
@@ -23,6 +53,56 @@ class Category(models.Model):
 #  PRODUCT
 # =========================
 class Product(models.Model):
+    """
+    Product Model - Core E-commerce Product
+    
+    Supports three product types:
+    1. Physical Products: Require shipping, have inventory
+    2. Digital Products: Instant download, file or URL-based
+    3. Service Products: Bookable services with seat management
+    
+    Key Features:
+    - Flexible product type system (physical/digital/service)
+    - Inventory tracking for physical products
+    - Digital file/URL delivery for digital products
+    - Service booking with date/time/location
+    - Tax calculation (GST/PST flags)
+    - Product images with main image selection
+    - Active/inactive status for product management
+    
+    Validation Rules:
+    - Cannot be both digital and service
+    - Digital products must have file or URL
+    - Service products should have quantity_in_stock = 0
+    
+    Usage Example:
+        # Create a physical product
+        product = Product.objects.create(
+            name="Yoga Mat",
+            price=29.99,
+            quantity_in_stock=50,
+            is_digital=False,
+            is_service=False
+        )
+        
+        # Create a digital product
+        digital = Product.objects.create(
+            name="Yoga Video",
+            price=9.99,
+            is_digital=True,
+            digital_file=uploaded_file
+        )
+        
+        # Create a service product
+        service = Product.objects.create(
+            name="Yoga Class",
+            price=25.00,
+            is_service=True,
+            service_seats=20,
+            service_date=date(2024, 1, 15),
+            service_time=time(18, 0)
+        )
+    """
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,

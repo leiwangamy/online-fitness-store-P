@@ -1,3 +1,42 @@
+"""
+Payment and Checkout Views Module
+
+This module handles the checkout and payment processing flow for the e-commerce platform.
+
+Key Features:
+- Shopping cart checkout process
+- Shipping calculation (flat rate or free shipping over threshold)
+- Tax calculation (GST/HST)
+- Support for physical products (shipping/pickup) and digital/service products (simplified checkout)
+- Pickup location selection for physical products
+- Order creation and processing
+- Digital download generation and email delivery
+
+Checkout Flow:
+1. User views cart items and totals
+2. For physical products: Select shipping or pickup, enter shipping address
+3. For digital/service only: Simplified checkout (order summary only)
+4. Order is created with status "paid" (simulated payment)
+5. Digital products: Download links generated and emailed
+6. Services: Seats deducted from availability
+7. Cart is cleared
+8. User redirected to success page
+
+Shipping Logic:
+- Physical products: Flat rate shipping or free over threshold
+- Pickup orders: No shipping fee
+- Digital/service only: No shipping required
+
+Tax Calculation:
+- GST/HST: 5% (configurable via TAX_RATE)
+- Applied to subtotal before shipping
+
+Constants:
+- TAX_RATE: GST/HST rate (default: 5%)
+- FREE_SHIP_OVER: Free shipping threshold (default: $100)
+- FLAT_SHIP: Flat shipping rate (default: $15)
+"""
+
 from decimal import Decimal
 
 from django.contrib import messages

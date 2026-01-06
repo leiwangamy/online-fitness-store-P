@@ -1,4 +1,55 @@
-# orders/models.py
+"""
+Order Models Module
+
+This module defines the order management system for the e-commerce platform.
+
+Key Models:
+- Order: Main order model containing customer information, totals, and fulfillment details
+- OrderItem: Individual items within an order (product, quantity, price)
+- PickupLocation: Physical locations where customers can pick up orders
+- DigitalDownload: Secure download links for digital products with expiry
+
+Order Lifecycle:
+1. Order created with status "pending" or "paid" (depending on payment method)
+2. Order items created for each product in cart
+3. For digital products: DigitalDownload records created with secure links
+4. For services: Service seats deducted from product availability
+5. Order can be updated to "shipped", "delivered", "cancelled", etc.
+
+Key Features:
+- Support for shipping and pickup fulfillment methods
+- Digital download link generation with expiry and download limits
+- Order status tracking
+- Tax and shipping calculation
+- Order history for customers
+- Admin panel integration for order management
+
+Usage Example:
+    # Create an order
+    order = Order.objects.create(
+        user=request.user,
+        status="paid",
+        subtotal=Decimal("100.00"),
+        tax=Decimal("5.00"),
+        shipping=Decimal("15.00"),
+        total=Decimal("120.00"),
+        is_pickup=False,
+        ship_name="John Doe",
+        ship_address1="123 Main St",
+        ship_city="Toronto",
+        ship_province="ON",
+        ship_postal_code="M5H 2N2",
+        ship_country="Canada"
+    )
+    
+    # Add items to order
+    OrderItem.objects.create(
+        order=order,
+        product=product,
+        quantity=2,
+        price=product.price
+    )
+"""
 
 import uuid
 from decimal import Decimal
@@ -12,7 +63,12 @@ from products.models import Product
 
 
 def default_expiry():
-    # default download link expiry: 30 days
+    """
+    Default expiry for digital download links: 30 days from creation.
+    
+    Returns:
+        datetime: Current time + 30 days
+    """
     return timezone.now() + timedelta(days=30)
 
 
