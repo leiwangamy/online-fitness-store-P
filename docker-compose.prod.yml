@@ -29,8 +29,10 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    # Remove port mapping - nginx will handle external access
+    # Keep 8000:8000 if you want direct access for debugging
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"  # Only accessible from localhost
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -46,6 +48,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    container_name: fitness_nginx_prod
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"  # For future HTTPS setup
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - ./media:/app/media:ro  # If you have media files
+    networks:
+      - default
 
 volumes:
   postgres_data:
