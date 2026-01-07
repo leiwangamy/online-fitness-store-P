@@ -78,6 +78,12 @@
 
 {% if not edit_mode %}
   <div class="profile-view">
+    {% if profile.first_name or profile.last_name %}
+      <p><strong>Name:</strong> 
+        {% if profile.first_name %}{{ profile.first_name }}{% endif %}
+        {% if profile.last_name %} {{ profile.last_name }}{% endif %}
+      </p>
+    {% endif %}
     <p><strong>Phone:</strong> {{ profile.phone|default:"-" }}</p>
     <p><strong>Address 1:</strong> {{ profile.address1|default:"-" }}</p>
     <p><strong>Address 2:</strong> {{ profile.address2|default:"-" }}</p>

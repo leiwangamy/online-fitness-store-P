@@ -12,11 +12,13 @@ def profile_edit(request):
         form = ProfileAllForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect("profiles:address_edit")
+            # Redirect to 'next' parameter if provided, otherwise to profile page
+            next_url = request.GET.get('next') or request.POST.get('next') or "profiles:account_profile"
+            return redirect(next_url)
     else:
         form = ProfileAllForm(instance=profile)
 
-    return render(request, "profile/address_edit.html", {"form": form})
+    return render(request, "profile/address_edit.html", {"form": form, "next": request.GET.get('next', '')})
 
 @login_required
 def account_profile(request):
