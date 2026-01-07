@@ -188,10 +188,25 @@
         position: relative;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: auto !important;
+        -webkit-touch-callout: none;
       }
       
       .mobile-menu-toggle:active {
         opacity: 0.7;
+        transform: scale(0.95);
+      }
+      
+      .mobile-menu-toggle:hover {
+        background: #0052a3;
+      }
+      
+      .mobile-menu-toggle:focus {
+        outline: 2px solid #0066cc;
+        outline-offset: 2px;
       }
 
       nav {
@@ -317,7 +332,7 @@
 
   <div class="container">
     <nav class="top-nav">
-      <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" type="button">☰ Menu</button>
+      <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu" type="button" onclick="toggleMobileMenu(event)">☰ Menu</button>
       <div class="nav-links" id="navLinks">
         <a href="{% url 'home:home' %}">Home</a>
         <a href="{% url 'cart:cart_detail' %}">Cart</a>
@@ -374,6 +389,24 @@
   </div>
 
   <script>
+    // Mobile menu toggle - global function for inline onclick (must be defined before DOMContentLoaded)
+    function toggleMobileMenu(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const navLinks = document.getElementById("navLinks");
+      if (!navLinks) return false;
+      
+      const isOpen = navLinks.classList.contains("mobile-open");
+      if (isOpen) {
+        navLinks.classList.remove("mobile-open");
+      } else {
+        navLinks.classList.add("mobile-open");
+      }
+      return false;
+    }
+    
     // Auto-dismiss toast messages + close button
     document.addEventListener("DOMContentLoaded", function () {
       const wrap = document.getElementById("toastWrap");
@@ -413,7 +446,7 @@
         }, 5000);
       });
 
-      // Mobile menu toggle - simpler, more reliable approach
+      // Also set up event listeners as backup for the menu toggle
       (function() {
         const mobileMenuToggle = document.getElementById("mobileMenuToggle");
         const navLinks = document.getElementById("navLinks");
@@ -422,24 +455,11 @@
           return;
         }
         
-        // Use multiple event types for better compatibility
-        function toggleMenu(e) {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          const isOpen = navLinks.classList.contains("mobile-open");
-          if (isOpen) {
-            navLinks.classList.remove("mobile-open");
-          } else {
-            navLinks.classList.add("mobile-open");
-          }
-          return false;
-        }
-        
-        // Add multiple event listeners
-        mobileMenuToggle.addEventListener("click", toggleMenu, false);
-        mobileMenuToggle.addEventListener("touchend", toggleMenu, false);
+        // Add touch event as backup
+        mobileMenuToggle.addEventListener("touchend", function(e) {
+          e.preventDefault();
+          toggleMobileMenu(e);
+        }, {passive: false});
         
         // Close menu when clicking a link
         navLinks.querySelectorAll("a, button").forEach(element => {
@@ -450,14 +470,16 @@
           });
         });
         
-        // Close menu when clicking outside
-        document.addEventListener("click", function(e) {
-          if (window.innerWidth <= 768 && navLinks.classList.contains("mobile-open")) {
-            if (!navLinks.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
-              navLinks.classList.remove("mobile-open");
+        // Close menu when clicking outside (with delay to avoid conflicts)
+        setTimeout(function() {
+          document.addEventListener("click", function(e) {
+            if (window.innerWidth <= 768 && navLinks.classList.contains("mobile-open")) {
+              if (!navLinks.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                navLinks.classList.remove("mobile-open");
+              }
             }
-          }
-        }, true);
+          }, true);
+        }, 200);
       })();
     });
 
