@@ -11,8 +11,30 @@
   .totals { margin-top: 20px; font-size: 1.05rem; }
   .totals p { margin: 4px 0; }
   .warning { color: red; font-weight: bold; margin: 15px 0; }
-  .buttons { margin-top: 20px; }
-  .buttons a, .buttons button { margin-right: 15px; padding: 8px 16px; font-size: 1rem; }
+  .buttons { 
+    margin-top: 20px; 
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+  }
+  .buttons a, .buttons button { 
+    padding: 8px 16px; 
+    font-size: 1rem; 
+  }
+  
+  /* Mobile: stack buttons vertically */
+  @media (max-width: 768px) {
+    .buttons {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .buttons a, .buttons button {
+      width: 100%;
+      text-align: center;
+      margin: 0;
+    }
+  }
   
   /* Main checkout container - aligns all sections */
   .checkout-container {
