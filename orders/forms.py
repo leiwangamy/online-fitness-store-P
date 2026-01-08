@@ -33,6 +33,7 @@ class ShippingAddressForm(forms.Form):
     address1 = forms.CharField(
         label="Address line 1",
         max_length=255,
+        required=False,  # Made optional - will validate in clean() that at least address1 or address2 is filled
         widget=forms.TextInput(attrs={
             "autocomplete": "address-line1",
         }),
@@ -163,10 +164,16 @@ class ShippingAddressForm(forms.Form):
         
         # If shipping is selected, validate shipping address fields
         if fulfillment_method == "shipping":
-            required_fields = ["first_name", "last_name", "address1", "city", "province", "postal_code"]
+            required_fields = ["first_name", "last_name", "city", "province", "postal_code"]
             for field in required_fields:
                 if not cleaned_data.get(field):
                     if field not in self.errors:
                         self.add_error(field, "This field is required for shipping.")
+            
+            # For address: at least address1 OR address2 must be filled
+            address1 = cleaned_data.get("address1", "").strip()
+            address2 = cleaned_data.get("address2", "").strip()
+            if not address1 and not address2:
+                self.add_error("address1", "At least one address line (Address 1 or Address 2) is required for shipping.")
         
         return cleaned_data

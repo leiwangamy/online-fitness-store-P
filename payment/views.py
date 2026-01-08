@@ -336,6 +336,18 @@ def checkout(request):
             # Convert queryset to list for template
             pickup_locations_list = list(pickup_locations) if pickup_locations else []
             
+            # Get profile for displaying default address
+            try:
+                from profiles.models import Profile
+                profile = getattr(request.user, "profile", None)
+                if not profile:
+                    profile, _ = Profile.objects.get_or_create(user=request.user)
+            except Exception:
+                profile = None
+            
+            # Add error message to help user understand what's wrong
+            messages.error(request, "Please correct the errors in the form below to complete your order.")
+            
             return render(
                 request,
                 "payment/checkout.html",
@@ -351,6 +363,7 @@ def checkout(request):
                     "form": form,
                     "pickup_locations": pickup_locations_list,
                     "default_address": initial,
+                    "profile": profile,
                 },
             )
 
@@ -533,7 +546,7 @@ def checkout(request):
         messages.success(request, f"Order #{order.id} placed successfully!")
         return redirect("payment:success")
 
-    # ---------------- GET: show checkout ----------------
+    # ---------------- GET: show checkout ---------------- 
     # Get profile for displaying default address
     try:
         from profiles.models import Profile

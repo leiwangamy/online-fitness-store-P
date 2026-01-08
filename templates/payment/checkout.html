@@ -221,6 +221,20 @@
       <div class="shipping-address-box" id="shipping-section">
         <h3 style="margin-top: 0; margin-bottom: 10px;">Shipping Address</h3>
         {% if default_address.address1 or default_address.city %}
+          {# Check if address is complete - address1 or address2 must be filled #}
+          {% if not default_address.first_name or not default_address.last_name or not default_address.city or not default_address.province or not default_address.postal_code or not default_address.address1 and not default_address.address2 %}
+            <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 10px; color: #856404;">
+              <strong>⚠️ Incomplete Address:</strong> Your address is missing required fields. Please <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}" style="color: #856404; text-decoration: underline;">complete your address</a> before placing an order.
+              <ul style="margin: 8px 0 0 20px; font-size: 0.9em;">
+                {% if not default_address.first_name %}<li>First name is missing</li>{% endif %}
+                {% if not default_address.last_name %}<li>Last name is missing</li>{% endif %}
+                {% if not default_address.address1 and not default_address.address2 %}<li>At least one address line (Address 1 or Address 2) is required</li>{% endif %}
+                {% if not default_address.city %}<li>City is missing</li>{% endif %}
+                {% if not default_address.province %}<li>Province is missing</li>{% endif %}
+                {% if not default_address.postal_code %}<li>Postal code is missing</li>{% endif %}
+              </ul>
+            </div>
+          {% endif %}
           <div style="line-height: 1.8;">
             {% if default_address.first_name or default_address.last_name %}
               <strong>
@@ -240,7 +254,9 @@
             {% if default_address.country %}{{ default_address.country }}{% endif %}
           </div>
         {% else %}
-          <p style="color: #666; font-style: italic;">No default address saved. Please <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}">add your address</a>.</p>
+          <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 10px; color: #856404;">
+            <strong>⚠️ No Address Saved:</strong> You need to add a shipping address before placing an order. Please <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}" style="color: #856404; text-decoration: underline;">add your address</a>.
+          </div>
         {% endif %}
         <div style="margin-top: 15px;">
           <a href="{% url 'profiles:address_edit' %}?next={{ request.path }}" style="padding: 6px 12px; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; font-size: 14px;">
@@ -252,6 +268,11 @@
 
     {# Show form fields with inline warnings only if there are errors - no error box #}
     {% if form.errors %}
+      {# Display a brief message that there are errors #}
+      <div style="color: #856404; background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-top: 20px; grid-column: 1 / -1; margin-bottom: 15px;">
+        <p style="margin: 0; font-weight: bold;">⚠️ Please correct the errors below to continue.</p>
+      </div>
+      
       {# Display non-field errors (form-level errors) only if they exist #}
       {% if form.non_field_errors %}
         <div style="color: #856404; background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-top: 20px; grid-column: 1 / -1;">
@@ -577,48 +598,95 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Form validation before submission
-  const form = document.querySelector('form');
+  // Find the checkout form - look for form containing the place order button
+  const placeOrderBtn = document.getElementById('place-order-btn');
+  const form = placeOrderBtn ? placeOrderBtn.closest('form') : document.querySelector('form[method="post"]');
   const pickupLocationError = document.getElementById('pickup-location-error');
   
   if (form) {
     form.addEventListener('submit', function(e) {
       const selectedMethod = document.querySelector('input[name="fulfillment_method"]:checked');
       
-      // Check if pickup is selected but no location is chosen
-      if (selectedMethod && selectedMethod.value === 'pickup') {
-        // Get pickup select element (might be in different scope)
-        const pickupSelectEl = document.getElementById('id_pickup_location_id');
-        const pickupSelectValue = pickupSelectEl ? pickupSelectEl.value : '';
-        
-        if (!pickupSelectValue || pickupSelectValue === '' || pickupSelectValue === '0') {
-          e.preventDefault(); // Prevent form submission
-          e.stopPropagation(); // Stop event from bubbling
+      // Only validate pickup location if this is a physical product checkout (has fulfillment method)
+      if (selectedMethod) {
+        // Check if shipping is selected - validate address completeness
+        if (selectedMethod.value === 'shipping') {
+          // Check if address is complete (check hidden fields or visible fields)
+          const requiredFields = ['first_name', 'last_name', 'city', 'province', 'postal_code'];
+          let missingFields = [];
           
-          // Show error message
-          if (pickupLocationError) {
-            pickupLocationError.style.display = 'block';
-            pickupLocationError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          requiredFields.forEach(fieldName => {
+            const field = document.querySelector('input[name="' + fieldName + '"]');
+            if (field && (!field.value || field.value.trim() === '')) {
+              missingFields.push(fieldName.replace('_', ' '));
+            }
+          });
+          
+          // Check that at least address1 OR address2 is filled
+          const address1Field = document.querySelector('input[name="address1"]');
+          const address2Field = document.querySelector('input[name="address2"]');
+          const address1 = address1Field ? (address1Field.value || '').trim() : '';
+          const address2 = address2Field ? (address2Field.value || '').trim() : '';
+          
+          if (!address1 && !address2) {
+            missingFields.push('address (at least Address 1 or Address 2)');
           }
           
-          // Highlight the pickup location dropdown
-          if (pickupSelectEl) {
-            pickupSelectEl.style.border = '2px solid red';
-            pickupSelectEl.style.backgroundColor = '#ffe6e6';
-            pickupSelectEl.focus();
+          if (missingFields.length > 0) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            // Remove highlight when user selects a location
-            pickupSelectEl.addEventListener('change', function() {
-              if (this.value && this.value !== '' && this.value !== '0') {
-                this.style.border = '';
-                this.style.backgroundColor = '';
-                if (pickupLocationError) {
-                  pickupLocationError.style.display = 'none';
-                }
-              }
-            }, { once: true });
+            // Show alert with missing fields
+            alert('⚠️ Incomplete Address: Please complete the following required fields before placing your order:\n\n' + 
+                  missingFields.map(f => '• ' + f.charAt(0).toUpperCase() + f.slice(1)).join('\n') + 
+                  '\n\nClick "Edit Address" to update your address.');
+            
+            // Scroll to address section
+            const addressSection = document.getElementById('shipping-section');
+            if (addressSection) {
+              addressSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            
+            return false;
           }
+        }
+        
+        // Check if pickup is selected but no location is chosen
+        if (selectedMethod.value === 'pickup') {
+          // Get pickup select element (might be in different scope)
+          const pickupSelectEl = document.getElementById('id_pickup_location_id');
+          const pickupSelectValue = pickupSelectEl ? pickupSelectEl.value : '';
           
-          return false;
+          if (!pickupSelectValue || pickupSelectValue === '' || pickupSelectValue === '0') {
+            e.preventDefault(); // Prevent form submission
+            e.stopPropagation(); // Stop event from bubbling
+            
+            // Show error message
+            if (pickupLocationError) {
+              pickupLocationError.style.display = 'block';
+              pickupLocationError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            
+            // Highlight the pickup location dropdown
+            if (pickupSelectEl) {
+              pickupSelectEl.style.border = '2px solid red';
+              pickupSelectEl.style.backgroundColor = '#ffe6e6';
+              pickupSelectEl.focus();
+              
+              // Remove highlight when user selects a location
+              pickupSelectEl.addEventListener('change', function() {
+                if (this.value && this.value !== '' && this.value !== '0') {
+                  this.style.border = '';
+                  this.style.backgroundColor = '';
+                  if (pickupLocationError) {
+                    pickupLocationError.style.display = 'none';
+                  }
+                }
+              }, { once: true });
+            }
+            
+            return false;
+          }
         }
       }
       
@@ -626,6 +694,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (pickupLocationError) {
         pickupLocationError.style.display = 'none';
       }
+      
+      // Allow form to submit normally - don't prevent default
+      // The form will submit and server-side validation will handle any remaining errors
     });
   }
 });
