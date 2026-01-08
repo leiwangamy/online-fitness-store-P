@@ -60,7 +60,7 @@ except Exception:
 
 from cart.models import CartItem
 from orders.models import Order, OrderItem, PickupLocation
-from orders.services import create_downloads_and_email
+from orders.services import create_downloads_and_email, send_order_confirmation_email
 from products.inventory import adjust_inventory, log_purchase
 
 
@@ -275,7 +275,10 @@ def checkout(request):
                             note=f"Order #{order.id} - Service: {product.name} x{qty}"
                         )
                 
-                # Create digital downloads and send email
+                # Send order confirmation email
+                send_order_confirmation_email(request, order)
+                
+                # Create digital downloads and send email (if there are digital products)
                 create_downloads_and_email(request, order)
                 
                 _clear_cart(request)
@@ -517,8 +520,11 @@ def checkout(request):
                         note=f"Order #{order.id} - {product.name} x{qty}"
                     )
 
-            # Create DigitalDownload rows + send email
-            # (your service already uses get_or_create so it’s safe)
+            # Send order confirmation email
+            send_order_confirmation_email(request, order)
+            
+            # Create DigitalDownload rows + send email (if there are digital products)
+            # (your service already uses get_or_create so it's safe)
             create_downloads_and_email(request, order, days_valid=7, max_downloads=0)
 
             _clear_cart(request)

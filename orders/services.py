@@ -9,9 +9,58 @@ from django.utils import timezone
 from .models import DigitalDownload
 
 
+def send_order_confirmation_email(request, order):
+    """
+    Send order confirmation email for ALL orders (physical, digital, or mixed).
+    This includes a link to view the order details.
+    """
+    to_email = getattr(getattr(order, "user", None), "email", None)
+    if not to_email:
+        return
+    
+    # Build the order detail page URL
+    order_path = reverse("orders:my_order_detail", args=[order.id])
+    
+    # Build a login URL that redirects to that order after login
+    login_path = reverse("account_login")
+    next_param = quote(order_path, safe="")
+    login_path_with_next = f"{login_path}?next={next_param}"
+    
+    # Make absolute URLs
+    order_url = request.build_absolute_uri(order_path)
+    login_url = request.build_absolute_uri(login_path_with_next)
+    
+    subject = f"Order Confirmation - Order #{order.id}"
+    message = (
+        f"Thank you for your order!\n\n"
+        f"Order Number: #{order.id}\n"
+        f"Total: ${order.total}\n\n"
+        f"View your order details:\n"
+        f"{login_url}\n\n"
+        f"If you're already signed in, you can view your order here:\n"
+        f"{order_url}\n\n"
+        f"We'll send you another email if your order contains digital downloads.\n"
+    )
+    
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [to_email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        # Log error but don't fail the order creation
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send order confirmation email for order #{order.id}: {e}")
+
+
 def create_downloads_and_email(request, order, days_valid=7, max_downloads=0):
     """
     Call ONLY after payment is confirmed.
+    Creates digital download records and sends email with download links.
     max_downloads: 0 or None => unlimited
     """
 
@@ -75,10 +124,16 @@ def create_downloads_and_email(request, order, days_valid=7, max_downloads=0):
         "If you're already signed in, it will go directly to your order page.\n"
     )
 
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [to_email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [to_email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        # Log error but don't fail the order creation
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send digital download email for order #{order.id}: {e}")

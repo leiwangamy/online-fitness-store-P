@@ -10,7 +10,13 @@
   th { background-color: #f0f0f0; }
   .totals { margin-top: 20px; font-size: 1.05rem; }
   .totals p { margin: 4px 0; }
-  .warning { color: red; font-weight: bold; margin: 15px 0; }
+  .warning { color: #856404; font-weight: bold; margin: 15px 0; }
+  
+  /* Style for fields with errors */
+  input.error-field, select.error-field, textarea.error-field {
+    border: 2px solid #ffc107 !important;
+    background-color: #fff3cd !important;
+  }
   .buttons { 
     margin-top: 20px; 
     display: flex;
@@ -244,58 +250,77 @@
       </div>
       </div> <!-- End checkout-options -->
 
-    {# Hidden fields with default address values - only show form fields if there are errors #}
+    {# Show form fields with inline warnings only if there are errors #}
     {% if form.errors %}
-      <div id="shipping-form-fields" style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px;">
-        <p style="color: #856404; font-weight: bold; margin-bottom: 10px;">Please correct the following errors:</p>
-        <p>
-          <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}:</label>
-          {{ form.first_name }}
-          {% if form.first_name.errors %}<span style="color: red;">{{ form.first_name.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}:</label>
-          {{ form.last_name }}
-          {% if form.last_name.errors %}<span style="color: red;">{{ form.last_name.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}:</label>
-          {{ form.phone }}
-          {% if form.phone.errors %}<span style="color: red;">{{ form.phone.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.address1.id_for_label }}">{{ form.address1.label }}:</label>
-          {{ form.address1 }}
-          {% if form.address1.errors %}<span style="color: red;">{{ form.address1.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.address2.id_for_label }}">{{ form.address2.label }}:</label>
-          {{ form.address2 }}
-          {% if form.address2.errors %}<span style="color: red;">{{ form.address2.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.city.id_for_label }}">{{ form.city.label }}:</label>
-          {{ form.city }}
-          {% if form.city.errors %}<span style="color: red;">{{ form.city.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.province.id_for_label }}">{{ form.province.label }}:</label>
-          {{ form.province }}
-          {% if form.province.errors %}<span style="color: red;">{{ form.province.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}:</label>
-          {{ form.postal_code }}
-          {% if form.postal_code.errors %}<span style="color: red;">{{ form.postal_code.errors }}</span>{% endif %}
-        </p>
-        <p>
-          <label for="{{ form.country.id_for_label }}">{{ form.country.label }}:</label>
-          {{ form.country }}
-          {% if form.country.errors %}<span style="color: red;">{{ form.country.errors }}</span>{% endif %}
-        </p>
+      <div id="shipping-form-fields" style="margin-top: 20px; grid-column: 1 / -1;">
+        {# Display non-field errors (form-level errors) at the top #}
+        {% if form.non_field_errors %}
+          <div style="color: #856404; background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+            {% for error in form.non_field_errors %}
+              <p style="margin: 0; font-weight: bold;">⚠️ {{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+        
+        <p style="color: #856404; font-weight: bold; margin-bottom: 10px;">Please correct the following fields:</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <p{% if form.first_name.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}:</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.first_name.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.last_name.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}:</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.last_name.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.phone.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}:</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.phone.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.address1.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.address1.id_for_label }}">{{ form.address1.label }}:</label>
+            {{ form.address1 }}
+            {% if form.address1.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.address1.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.address2.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.address2.id_for_label }}">{{ form.address2.label }}:</label>
+            {{ form.address2 }}
+            {% if form.address2.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.address2.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.city.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.city.id_for_label }}">{{ form.city.label }}:</label>
+            {{ form.city }}
+            {% if form.city.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.city.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.province.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.province.id_for_label }}">{{ form.province.label }}:</label>
+            {{ form.province }}
+            {% if form.province.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.province.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.postal_code.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}:</label>
+            {{ form.postal_code }}
+            {% if form.postal_code.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.postal_code.errors.0 }}</span>{% endif %}
+          </p>
+          <p{% if form.country.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
+            <label for="{{ form.country.id_for_label }}">{{ form.country.label }}:</label>
+            {{ form.country }}
+            {% if form.country.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 3px;">⚠️ {{ form.country.errors.0 }}</span>{% endif %}
+          </p>
+        </div>
+        
+        {# Display pickup location errors if any #}
+        {% if form.pickup_location_id.errors %}
+          <p style="color: #856404; font-weight: bold; margin-top: 15px;">
+            ⚠️ Pickup Location: {{ form.pickup_location_id.errors.0 }}
+          </p>
+        {% endif %}
       </div>
     {% else %}
-      {# Hidden fields with default values #}
+      {# Hidden fields with default values when no errors #}
       <input type="hidden" name="first_name" value="{{ default_address.first_name|default:'' }}">
       <input type="hidden" name="last_name" value="{{ default_address.last_name|default:'' }}">
       <input type="hidden" name="phone" value="{{ default_address.phone|default:'' }}">
@@ -319,7 +344,7 @@
               <option value="{{ location.id }}">{{ location.name }}</option>
             {% endfor %}
           </select>
-          {% if form.pickup_location_id.errors %}<span style="color: red;">{{ form.pickup_location_id.errors }}</span>{% endif %}
+          {% if form.pickup_location_id.errors %}<span style="color: #856404; font-size: 0.9em; display: block; margin-top: 5px;">⚠️ {{ form.pickup_location_id.errors.0 }}</span>{% endif %}
         </p>
         <div id="pickup-location-details" style="display: none;" class="pickup-location-info"></div>
       {% else %}
