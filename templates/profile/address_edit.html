@@ -3,37 +3,14 @@
 
 {% block extra_css %}
 <style>
-  .field-warning {
-    color: #856404;
-    font-size: 0.9em;
-    display: block;
-    margin-top: 3px;
-    font-style: italic;
-  }
-  .field-warning::before {
-    content: "⚠️ ";
-  }
   input:invalid, select:invalid {
     border-color: #ffc107;
-  }
-  .incomplete-warning {
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    color: #856404;
   }
 </style>
 {% endblock %}
 
 {% block content %}
   <h1>Edit Address</h1>
-
-  {# Warning about incomplete address #}
-  <div id="incomplete-warning" class="incomplete-warning" style="display: none;">
-    <strong>⚠️ Incomplete Address:</strong> Please fill in all required fields (marked with *) to avoid checkout issues.
-  </div>
 
   <form method="post" id="address-form">
     {% csrf_token %}
@@ -43,13 +20,11 @@
       <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}: <span style="color: red;">*</span></label>
       {{ form.first_name }}
       {% if form.first_name.errors %}<span style="color: red;">{{ form.first_name.errors }}</span>{% endif %}
-      <span class="field-warning" id="warning-first_name" style="display: none;">First name is required for shipping</span>
     </p>
     <p>
       <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}: <span style="color: red;">*</span></label>
       {{ form.last_name }}
       {% if form.last_name.errors %}<span style="color: red;">{{ form.last_name.errors }}</span>{% endif %}
-      <span class="field-warning" id="warning-last_name" style="display: none;">Last name is required for shipping</span>
     </p>
     
     {# Show remaining fields #}
@@ -57,19 +32,10 @@
       {% if field.name != 'first_name' and field.name != 'last_name' %}
         <p>
           <label for="{{ field.id_for_label }}">{{ field.label }}:
-            {% if field.name in 'city,province,postal_code' %}<span style="color: red;">*</span>{% elif field.name == 'address1' %}<span style="color: #856404; font-size: 0.9em;">(at least one address line required)</span>{% endif %}
+            {% if field.name in 'city,province,postal_code' %}<span style="color: red;">*</span>{% endif %}
           </label>
           {{ field }}
           {% if field.errors %}<span style="color: red;">{{ field.errors }}</span>{% endif %}
-          {% if field.name == 'address1' %}
-            <span class="field-warning" id="warning-address1" style="display: none;">At least one address line (Address 1 or Address 2) is required for shipping</span>
-          {% elif field.name == 'city' %}
-            <span class="field-warning" id="warning-city" style="display: none;">City is required for shipping</span>
-          {% elif field.name == 'province' %}
-            <span class="field-warning" id="warning-province" style="display: none;">Province is required for shipping</span>
-          {% elif field.name == 'postal_code' %}
-            <span class="field-warning" id="warning-postal_code" style="display: none;">Postal code is required for shipping</span>
-          {% endif %}
         </p>
       {% endif %}
     {% endfor %}
@@ -84,109 +50,5 @@
     <a href="{{ next|default:request.path }}">Cancel</a>
   </form>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const form = document.getElementById('address-form');
-      const requiredFields = ['first_name', 'last_name', 'city', 'province', 'postal_code'];
-      const incompleteWarning = document.getElementById('incomplete-warning');
-      
-      function checkCompleteness() {
-        let isIncomplete = false;
-        
-        // Check required fields
-        requiredFields.forEach(fieldName => {
-          const field = document.getElementById('id_' + fieldName);
-          const warning = document.getElementById('warning-' + fieldName);
-          
-          if (field) {
-            const isEmpty = !field.value || field.value.trim() === '';
-            if (isEmpty) {
-              isIncomplete = true;
-              if (warning) warning.style.display = 'block';
-            } else {
-              if (warning) warning.style.display = 'none';
-            }
-          }
-        });
-        
-        // Check that at least address1 OR address2 is filled
-        const address1Field = document.getElementById('id_address1');
-        const address2Field = document.getElementById('id_address2');
-        const address1Warning = document.getElementById('warning-address1');
-        const address1 = address1Field ? (address1Field.value || '').trim() : '';
-        const address2 = address2Field ? (address2Field.value || '').trim() : '';
-        
-        if (!address1 && !address2) {
-          isIncomplete = true;
-          if (address1Warning) address1Warning.textContent = 'At least one address line (Address 1 or Address 2) is required for shipping';
-          if (address1Warning) address1Warning.style.display = 'block';
-        } else {
-          if (address1Warning) address1Warning.style.display = 'none';
-        }
-        
-        if (isIncomplete) {
-          incompleteWarning.style.display = 'block';
-        } else {
-          incompleteWarning.style.display = 'none';
-        }
-      }
-      
-      // Check on page load
-      checkCompleteness();
-      
-      // Check on field changes
-      requiredFields.forEach(fieldName => {
-        const field = document.getElementById('id_' + fieldName);
-        if (field) {
-          field.addEventListener('input', checkCompleteness);
-          field.addEventListener('blur', checkCompleteness);
-        }
-      });
-      
-      // Validate before submit
-      form.addEventListener('submit', function(e) {
-        checkCompleteness();
-        let hasErrors = false;
-        
-        // Check required fields
-        requiredFields.forEach(fieldName => {
-          const field = document.getElementById('id_' + fieldName);
-          if (field && (!field.value || field.value.trim() === '')) {
-            hasErrors = true;
-            field.style.borderColor = '#ffc107';
-            field.style.backgroundColor = '#fff3cd';
-          } else if (field) {
-            field.style.borderColor = '';
-            field.style.backgroundColor = '';
-          }
-        });
-        
-        // Check that at least address1 OR address2 is filled
-        const address1Field = document.getElementById('id_address1');
-        const address2Field = document.getElementById('id_address2');
-        const address1 = address1Field ? (address1Field.value || '').trim() : '';
-        const address2 = address2Field ? (address2Field.value || '').trim() : '';
-        
-        if (!address1 && !address2) {
-          hasErrors = true;
-          if (address1Field) {
-            address1Field.style.borderColor = '#ffc107';
-            address1Field.style.backgroundColor = '#fff3cd';
-          }
-        } else {
-          if (address1Field) {
-            address1Field.style.borderColor = '';
-            address1Field.style.backgroundColor = '';
-          }
-        }
-        
-        if (hasErrors) {
-          e.preventDefault();
-          incompleteWarning.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          return false;
-        }
-      });
-    });
-  </script>
 {% endblock %}
 
