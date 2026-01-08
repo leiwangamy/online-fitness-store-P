@@ -267,7 +267,8 @@
       </div> <!-- End checkout-options -->
 
     {# Show form fields with inline warnings only if there are errors - no error box #}
-    {% if form.errors %}
+    {# Only show error message if there are actual errors to display #}
+    {% if form.non_field_errors or form.first_name.errors or form.last_name.errors or form.phone.errors or form.address1.errors or form.address2.errors or form.city.errors or form.province.errors or form.postal_code.errors or form.country.errors or form.pickup_location_id.errors %}
       {# Display a brief message that there are errors #}
       <div style="color: #856404; background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-top: 20px; grid-column: 1 / -1; margin-bottom: 15px;">
         <p style="margin: 0; font-weight: bold;">⚠️ Please correct the errors below to continue.</p>
@@ -281,9 +282,10 @@
           {% endfor %}
         </div>
       {% endif %}
+      {% endif %}
       
       {# Show only fields that have errors - no empty space #}
-      {% if form.first_name.errors or form.last_name.errors or form.phone.errors or form.address1.errors or form.address2.errors or form.city.errors or form.province.errors or form.postal_code.errors or form.country.errors %}
+      {% if form.first_name.errors or form.last_name.errors or form.phone.errors or form.address1.errors or form.address2.errors or form.city.errors or form.province.errors or form.postal_code.errors or form.country.errors or form.pickup_location_id.errors %}
         <div id="shipping-form-fields" style="margin-top: 20px; grid-column: 1 / -1;">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             {% if form.first_name.errors %}
@@ -359,7 +361,10 @@
           {% endif %}
         </div>
       {% endif %}
-    {% else %}
+    {% endif %}
+    
+    {# Show hidden fields when there are no errors #}
+    {% if not form.non_field_errors and not form.first_name.errors and not form.last_name.errors and not form.phone.errors and not form.address1.errors and not form.address2.errors and not form.city.errors and not form.province.errors and not form.postal_code.errors and not form.country.errors and not form.pickup_location_id.errors %}
       {# Hidden fields with default values when no errors #}
       <input type="hidden" name="first_name" value="{{ default_address.first_name|default:'' }}">
       <input type="hidden" name="last_name" value="{{ default_address.last_name|default:'' }}">

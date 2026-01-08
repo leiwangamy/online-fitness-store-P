@@ -556,15 +556,20 @@ def checkout(request):
     except Exception:
         profile = None
     
-    # Create form with pickup locations
+    # Create form with pickup locations - use initial data, no validation errors on GET
     try:
         form = ShippingAddressForm(initial=initial, pickup_locations=pickup_locations)
+        # Clear any errors that might exist (form.errors is empty dict on new form, but let's be explicit)
+        if hasattr(form, '_errors'):
+            form._errors = {}
     except Exception as e:
         # Fallback if form creation fails
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error creating ShippingAddressForm: {e}")
         form = ShippingAddressForm(initial=initial)
+        if hasattr(form, '_errors'):
+            form._errors = {}
     
     # Convert queryset to list for template (safer for iteration)
     pickup_locations_list = list(pickup_locations) if pickup_locations else []
