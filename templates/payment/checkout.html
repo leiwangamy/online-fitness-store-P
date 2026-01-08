@@ -250,20 +250,19 @@
       </div>
       </div> <!-- End checkout-options -->
 
-    {# Show form fields with inline warnings only if there are errors #}
+    {# Show form fields with inline warnings only if there are errors - no error box #}
     {% if form.errors %}
+      {# Display non-field errors (form-level errors) only if they exist #}
+      {% if form.non_field_errors %}
+        <div style="color: #856404; background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-top: 20px; grid-column: 1 / -1;">
+          {% for error in form.non_field_errors %}
+            <p style="margin: 0; font-weight: bold;">⚠️ {{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+      
+      {# Show fields with errors inline, integrated into the shipping address section #}
       <div id="shipping-form-fields" style="margin-top: 20px; grid-column: 1 / -1;">
-        {# Display non-field errors (form-level errors) at the top #}
-        {% if form.non_field_errors %}
-          <div style="color: #856404; background: #fff3cd; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-            {% for error in form.non_field_errors %}
-              <p style="margin: 0; font-weight: bold;">⚠️ {{ error }}</p>
-            {% endfor %}
-          </div>
-        {% endif %}
-        
-        <p style="color: #856404; font-weight: bold; margin-bottom: 10px;">Please correct the following fields:</p>
-        
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
           <p{% if form.first_name.errors %} style="background: #fff3cd; padding: 8px; border-radius: 4px; border: 1px solid #ffc107;"{% endif %}>
             <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}:</label>
