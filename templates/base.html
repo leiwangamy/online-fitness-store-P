@@ -357,7 +357,6 @@
           </form>
         {% else %}
           👤 <a href="{% url 'account_login' %}?next={{ request.path|urlencode }}">Sign In</a>
-          <span style="font-size: 0.9em; color: #666;">No account yet? <a href="{% url 'account_signup' %}">Sign up here</a></span>
         {% endif %}
       </div>
 
@@ -376,8 +375,7 @@
             <button type="submit" class="logout-button-compact">Logout</button>
           </form>
         {% else %}
-          <a href="{% url 'account_login' %}?next={{ request.path|urlencode }}" style="color: #0066cc; text-decoration: none; font-weight: bold; font-size: 11px; display: block; margin-bottom: 3px;">Sign In</a>
-          <span style="font-size: 9px; color: #666; display: block; line-height: 1.2;">No account? <a href="{% url 'account_signup' %}" style="color: #0066cc; text-decoration: underline;">Sign up</a></span>
+          <a href="{% url 'account_login' %}?next={{ request.path|urlencode }}" style="color: #0066cc; text-decoration: none; font-weight: bold; font-size: 11px; display: block;">Sign In</a>
         {% endif %}
       </div>
     </nav>

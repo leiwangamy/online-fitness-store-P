@@ -5,6 +5,10 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from .models import MemberProfile
 
+# Membership pricing - update these values to change prices
+BASIC_MEMBERSHIP_PRICE = 0
+PREMIUM_MEMBERSHIP_PRICE = 20
+
 def membership_plans(request):
     """Public view to show membership plans. Redirects to login when Subscribe is clicked."""
     # If user is authenticated, redirect to the full membership page
@@ -19,8 +23,8 @@ def membership_plans(request):
     
     # Show public membership plans
     return render(request, "members/membership_plans.html", {
-        "basic_price": 39,
-        "premium_price": 79
+        "basic_price": BASIC_MEMBERSHIP_PRICE,
+        "premium_price": PREMIUM_MEMBERSHIP_PRICE
     })
 
 @login_required
@@ -45,12 +49,13 @@ def my_membership(request):
 
         if "subscribe_basic" in request.POST:
             membership.start_monthly_membership(level="basic")
-            messages.success(request, f"Successfully subscribed to BASIC plan for $39/month!")
+            price_text = "Free" if BASIC_MEMBERSHIP_PRICE == 0 else f"${BASIC_MEMBERSHIP_PRICE}/month"
+            messages.success(request, f"Successfully subscribed to BASIC plan ({price_text})!")
             return redirect("members:my_membership")
 
         if "subscribe_premium" in request.POST:
             membership.start_monthly_membership(level="premium")
-            messages.success(request, f"Successfully subscribed to PREMIUM plan for $79/month!")
+            messages.success(request, f"Successfully subscribed to PREMIUM plan for ${PREMIUM_MEMBERSHIP_PRICE}/month!")
             return redirect("members:my_membership")
 
         if "switch_to_basic" in request.POST and membership.is_active_member:
@@ -65,4 +70,8 @@ def my_membership(request):
             messages.success(request, "Membership plan switched to PREMIUM. Your membership will change immediately.")
             return redirect("members:my_membership")
 
-    return render(request, "members/my_membership.html", {"profile": membership, "basic_price": 39, "premium_price": 79})
+    return render(request, "members/my_membership.html", {
+        "profile": membership,
+        "basic_price": BASIC_MEMBERSHIP_PRICE,
+        "premium_price": PREMIUM_MEMBERSHIP_PRICE
+    })

@@ -123,7 +123,7 @@
   <div class="plan">
     <h3>Facility Only</h3>
     <p>Unlimited access to fitness facility and gym equipment.</p>
-    <p><strong>${{ basic_price }}/month</strong></p>
+    <p><strong>{% if basic_price == 0 %}Free{% else %}${{ basic_price }}/month{% endif %}</strong></p>
     <p>Great for members who want to train independently.</p>
 
     {% if profile.is_active_member %}
