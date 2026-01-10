@@ -75,3 +75,8 @@ def my_membership(request):
         "basic_price": BASIC_MEMBERSHIP_PRICE,
         "premium_price": PREMIUM_MEMBERSHIP_PRICE
     })
+
+@login_required
+def manage_subscription(request):
+    """Manage subscription page - redirects to my_membership"""
+    return redirect("members:my_membership")

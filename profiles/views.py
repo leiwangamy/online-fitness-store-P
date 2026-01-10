@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 
 from .forms import ProfileAllForm
 from .models import Profile
+from orders.models import Order
 
 @login_required
 def profile_edit(request):
@@ -24,3 +25,9 @@ def profile_edit(request):
 def account_profile(request):
     profile, _ = Profile.objects.get_or_create(user=request.user)
     return render(request, "profile/account_profile.html", {"profile": profile, "edit_mode": False})
+
+@login_required
+def billing_payments(request):
+    """Display billing and payment history (orders)"""
+    orders = Order.objects.filter(user=request.user).order_by("-created_at")
+    return render(request, "profile/billing_payments.html", {"orders": orders})

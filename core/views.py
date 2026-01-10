@@ -10,3 +10,8 @@ def contact_page(request):
     return render(request, 'core/contact.html', {
         'company_info': company_info
     })
+
+
+def blog_page(request):
+    """Display blog page"""
+    return render(request, 'core/blog.html')
