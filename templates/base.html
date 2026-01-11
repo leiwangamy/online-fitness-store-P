@@ -442,6 +442,13 @@
               👤 Account <span style="font-size: 0.8em;">▼</span>
             </button>
             <div class="account-dropdown-menu" id="accountDropdown">
+              <div style="padding: 10px 20px; color: #666; font-size: 14px; border-bottom: 1px solid #eee;">
+                {% if user.email %}
+                  {{ user.email|truncatechars:30 }}
+                {% else %}
+                  {{ user.username|truncatechars:30 }}
+                {% endif %}
+              </div>
               <a href="{% url 'profiles:account_profile' %}">Profile</a>
               <div style="padding: 10px 20px; color: #666; font-size: 16px; border-bottom: 1px solid #eee;">
                 Membership: <strong style="color: #0066cc; font-size: 16px;">{{ user_membership_status|default:"None" }}</strong>
@@ -466,6 +473,13 @@
               👤 Account <span style="font-size: 0.8em;">▼</span>
             </button>
             <div class="account-dropdown-menu" id="accountDropdownDesktop">
+              <div style="padding: 10px 20px; color: #666; font-size: 14px; border-bottom: 1px solid #eee;">
+                {% if user.email %}
+                  {{ user.email|truncatechars:30 }}
+                {% else %}
+                  {{ user.username|truncatechars:30 }}
+                {% endif %}
+              </div>
               <a href="{% url 'profiles:account_profile' %}">Profile</a>
               <div style="padding: 10px 20px; color: #666; font-size: 16px; border-bottom: 1px solid #eee;">
                 Membership: <strong style="color: #0066cc; font-size: 16px;">{{ user_membership_status|default:"None" }}</strong>
