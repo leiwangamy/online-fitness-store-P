@@ -109,6 +109,12 @@
         box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
 
+    .product-card-image-link {
+        display: block;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
     .product-card-image-wrapper {
         width: 100%;
         height: 200px;
@@ -119,6 +125,7 @@
         overflow: hidden;
         padding: 15px;
         box-sizing: border-box;
+        cursor: pointer;
     }
 
     .product-card-image {
@@ -126,6 +133,7 @@
         max-height: 100%;
         object-fit: contain;
         display: block;
+        pointer-events: none;
     }
 
     .product-card-content {
@@ -240,6 +248,12 @@
     </p>
 </div>
 
+<!-- Action Buttons Section -->
+<div class="action-buttons">
+    <a href="{% url 'products:list' %}" class="action-button">Browse All Products</a>
+    <a href="{% url 'members:membership_plans' %}" class="action-button">View Membership Plans</a>
+</div>
+
 <!-- Featured Products Section -->
 {% if featured_products %}
 <div class="featured-section">
@@ -250,15 +264,17 @@
     <div class="featured-products">
         {% for product in featured_products %}
         <div class="product-card">
-            <div class="product-card-image-wrapper">
-                {% if product.main_image_url %}
-                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" class="product-card-image">
-                {% elif product.images.all %}
-                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-image">
-                {% else %}
-                    <div style="color: #999; font-size: 0.9rem;">No Image</div>
-                {% endif %}
-            </div>
+            <a href="{% url 'products:detail' product.pk %}" class="product-card-image-link">
+                <div class="product-card-image-wrapper">
+                    {% if product.main_image_url %}
+                        <img src="{{ product.main_image_url }}" alt="{{ product.name }}" class="product-card-image">
+                    {% elif product.images.all %}
+                        <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-image">
+                    {% else %}
+                        <div style="color: #999; font-size: 0.9rem;">No Image</div>
+                    {% endif %}
+                </div>
+            </a>
             <div class="product-card-content">
                 <h3>{{ product.name }}</h3>
                 <p class="product-card-price">${{ product.price }}</p>
@@ -269,10 +285,4 @@
     </div>
 </div>
 {% endif %}
-
-<!-- Action Buttons Section -->
-<div class="action-buttons">
-    <a href="{% url 'products:list' %}" class="action-button">Browse All Products</a>
-    <a href="{% url 'members:membership_plans' %}" class="action-button">View Membership Plans</a>
-</div>
 {% endblock %}
