@@ -227,3 +227,40 @@ class MembershipPlanContent(models.Model):
         """Get or create the single instance of MembershipPlanContent"""
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class FeaturedProductsContent(models.Model):
+    """
+    Content model for Featured Products section on home page.
+    Singleton pattern - only one instance should exist.
+    """
+    # Section header
+    section_title = models.CharField(
+        max_length=200,
+        default="Featured Products",
+        help_text="Title shown above the featured products section"
+    )
+    section_description = models.TextField(
+        default="Hand-picked programs and equipment from our store",
+        help_text="Description text shown below the title in the featured products section"
+    )
+    
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Featured Products Content"
+        verbose_name_plural = "Featured Products Content"
+    
+    def __str__(self):
+        return f"Featured Products Content (Updated: {self.updated_at.strftime('%Y-%m-%d')})"
+    
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        self.pk = 1
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def get_instance(cls):
+        """Get or create the single instance of FeaturedProductsContent"""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj

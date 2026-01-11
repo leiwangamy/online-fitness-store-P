@@ -73,7 +73,17 @@
         text-align: center;
         font-size: 2.2rem;
         color: #2d6a4f;
+        margin-bottom: 10px;
+    }
+
+    .featured-section-description {
+        text-align: center;
+        font-size: 1.1rem;
+        color: #666;
         margin-bottom: 30px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .featured-products {
@@ -196,7 +206,10 @@
 <!-- Featured Products Section -->
 {% if featured_products %}
 <div class="featured-section">
-    <h2>Featured Products</h2>
+    <h2>{% if content %}{{ content.section_title }}{% else %}Featured Products{% endif %}</h2>
+    {% if content %}
+        <p class="featured-section-description">{{ content.section_description }}</p>
+    {% endif %}
     <div class="featured-products">
         {% for product in featured_products %}
         <div class="product-card">
