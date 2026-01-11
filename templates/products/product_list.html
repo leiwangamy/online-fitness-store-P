@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}Products | Fitness Club{% endblock %}
+
+{% block extra_css %}
+<style>
+    .products-header {
+        margin-bottom: 30px;
+    }
+
+    .products-header h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        color: #2d6a4f;
+        margin-bottom: 30px;
+    }
+
+    .search-section {
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 10px;
+        max-width: 500px;
+        margin: 0 auto;
+        justify-content: center;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 12px 16px;
+        font-size: 16px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        min-width: 200px;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #2d6a4f;
+    }
+
+    .search-button {
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        background: #2d6a4f;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .search-button:hover {
+        background: #1b4332;
+    }
+
+    .category-filters {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+    }
+
+    .category-filter {
+        padding: 10px 20px;
+        text-decoration: none;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        background: white;
+        color: #333;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+
+    .category-filter:hover {
+        background: #f0f0f0;
+        border-color: #2d6a4f;
+    }
+
+    .category-filter.active {
+        background: #2d6a4f;
+        color: white;
+        border-color: #2d6a4f;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto 40px;
+    }
+
+    .product-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-align: center;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .product-card-image-wrapper {
+        width: 100%;
+        height: 200px;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .product-card-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .product-card-content {
+        padding: 12px 15px;
+    }
+
+    .product-card h3 {
+        font-size: 0.95rem;
+        margin: 0 0 8px 0;
+        color: #333;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .product-card-price {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2d6a4f;
+        margin: 5px 0;
+    }
+
+    .product-card-link {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #2d6a4f;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .product-card-link:hover {
+        background: #1b4332;
+    }
+
+    .pagination {
+        margin-top: 40px;
+        text-align: center;
+    }
+
+    .pagination .step-links {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .pagination a,
+    .pagination .current,
+    .pagination .disabled {
+        padding: 10px 16px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+    }
+
+    .pagination a {
+        background: white;
+        color: #2d6a4f;
+    }
+
+    .pagination a:hover {
+        background: #f0f0f0;
+        border-color: #2d6a4f;
+    }
+
+    .pagination .current {
+        background: #2d6a4f;
+        color: white;
+        border-color: #2d6a4f;
+        font-weight: bold;
+    }
+
+    .pagination .disabled {
+        color: #aaa;
+        background: #f9f9f9;
+        border-color: #ddd;
+        cursor: default;
+    }
+
+    @media (max-width: 992px) {
+        .products-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .products-header h1 {
+            font-size: 2rem;
+        }
+
+        .products-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .search-form {
+            flex-direction: column;
+        }
+
+        .search-button {
+            width: 100%;
+        }
+
+        .category-filters {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .category-filter {
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="products-header">
+    <h1>Products</h1>
+</div>
+
+<!-- Search Section -->
+<div class="search-section">
+    <form method="get" class="search-form">
+        <input 
+            type="text" 
+            name="q" 
+            value="{{ search_query }}" 
+            placeholder="Search products..." 
+            class="search-input"
+        >
+        <button type="submit" class="search-button">Search</button>
+        {% if selected_category %}
+            <input type="hidden" name="category" value="{{ selected_category }}">
+        {% endif %}
+    </form>
+</div>
+
+<!-- Category Filters -->
+<div class="category-filters">
+    <a href="{% url 'products:list' %}{% if search_query %}?q={{ search_query }}{% endif %}" 
+       class="category-filter {% if not selected_category %}active{% endif %}">
+        All
+    </a>
+    <a href="{% url 'products:list' %}?category=digital{% if search_query %}&q={{ search_query }}{% endif %}" 
+       class="category-filter {% if selected_category == 'digital' %}active{% endif %}">
+        Digital
+    </a>
+    <a href="{% url 'products:list' %}?category=services{% if search_query %}&q={{ search_query }}{% endif %}" 
+       class="category-filter {% if selected_category == 'services' %}active{% endif %}">
+        Services
+    </a>
+    {% for category in categories %}
+        <a href="{% url 'products:list' %}?category={{ category.slug }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+           class="category-filter {% if selected_category == category.slug %}active{% endif %}">
+            {{ category.name }}
+        </a>
+    {% endfor %}
+</div>
+
+<!-- Products Grid -->
+{% if page_obj %}
+    <div class="products-grid">
+        {% for product in page_obj %}
+        <div class="product-card">
+            <div class="product-card-image-wrapper">
+                {% if product.main_image_url %}
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" class="product-card-image">
+                {% elif product.images.all %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-image">
+                {% else %}
+                    <div style="color: #999; font-size: 0.9rem;">No Image</div>
+                {% endif %}
+            </div>
+            <div class="product-card-content">
+                <h3>{{ product.name }}</h3>
+                <p class="product-card-price">${{ product.price }}</p>
+                <a href="{% url 'products:detail' product.pk %}" class="product-card-link">View Details</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        <div class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">previous</a>
+            {% else %}
+                <span class="disabled">&laquo; first</span>
+                <span class="disabled">previous</span>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}">last &raquo;</a>
+            {% else %}
+                <span class="disabled">next</span>
+                <span class="disabled">last &raquo;</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+{% else %}
+    <p style="text-align: center; font-size: 1.2rem; color: #666; margin: 40px 0;">
+        {% if search_query %}
+            No products found matching "{{ search_query }}".
+        {% else %}
+            No products available.
+        {% endif %}
+    </p>
+{% endif %}
+{% endblock %}
+

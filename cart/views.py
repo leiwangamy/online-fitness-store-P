@@ -6,6 +6,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from products.models import Product
 from .models import CartItem
+from .utils import (
+    get_cart_items,
+    add_to_session_cart,
+    remove_from_session_cart,
+    update_session_cart_quantity,
+)
 
 
 TAX_RATE = Decimal("0.05")  # change if you want
@@ -26,11 +32,11 @@ def _max_stock(product: Product) -> int:
     return int(getattr(product, "quantity_in_stock", 0) or 0)
 
 
-@login_required
 @transaction.atomic
 def add_to_cart(request, pk):
     """
     Add to cart or update quantity for a single product.
+    Works for both authenticated and anonymous users.
     - GET: add 1 (like "Add to Cart" button)
     - POST: supports quantity + override=True
     """
@@ -53,87 +59,107 @@ def add_to_cart(request, pk):
             quantity = 1
             override = False
 
-    cart_item, _created = CartItem.objects.select_for_update().get_or_create(
-        user=request.user,
-        product=product,
-        defaults={"quantity": 0},
-    )
+    if request.user.is_authenticated:
+        # Authenticated users: use database
+        cart_item, _created = CartItem.objects.select_for_update().get_or_create(
+            user=request.user,
+            product=product,
+            defaults={"quantity": 0},
+        )
 
-    if quantity < 1:
-        cart_item.delete()
-        return redirect("cart:cart_detail")
+        if quantity < 1:
+            cart_item.delete()
+            return redirect("cart:cart_detail")
 
-    if override:
-        new_qty = min(quantity, max_stock)
+        if override:
+            new_qty = min(quantity, max_stock)
+        else:
+            new_qty = min(cart_item.quantity + quantity, max_stock)
+
+        cart_item.quantity = new_qty
+        cart_item.save(update_fields=["quantity"])
     else:
-        new_qty = min(cart_item.quantity + quantity, max_stock)
+        # Anonymous users: use session
+        product_id_str = str(pk)
+        cart = request.session.get('cart', {})
+        current_qty = cart.get(product_id_str, 0)
 
-    cart_item.quantity = new_qty
-    cart_item.save(update_fields=["quantity"])
+        if quantity < 1:
+            remove_from_session_cart(request, pk)
+            return redirect("cart:cart_detail")
+
+        if override:
+            new_qty = min(quantity, max_stock)
+        else:
+            new_qty = min(current_qty + quantity, max_stock)
+
+        update_session_cart_quantity(request, pk, new_qty)
 
     return redirect("cart:cart_detail")
 
 
-@login_required
 def remove_from_cart(request, pk):
-    CartItem.objects.filter(user=request.user, product_id=pk).delete()
+    """Remove item from cart for both authenticated and anonymous users"""
+    if request.user.is_authenticated:
+        CartItem.objects.filter(user=request.user, product_id=pk).delete()
+    else:
+        remove_from_session_cart(request, pk)
+    
     return redirect("cart:cart_detail")
 
 
-@login_required
 @transaction.atomic
 def update_cart_item(request, pk):
     """
-    Optional: if you have a dedicated 'Update' button in cart page.
-    POST only.
+    Update quantity in cart (POST only).
+    Works for both authenticated and anonymous users.
     """
     if request.method != "POST":
         return redirect("cart:cart_detail")
 
-    item = get_object_or_404(CartItem.objects.select_for_update(), user=request.user, pk=pk)
+    product = get_object_or_404(Product, pk=pk, is_active=True)
 
-    if _is_digital_or_service(item.product):
-        item.quantity = 1
-        item.save(update_fields=["quantity"])
-        return redirect("cart:cart_detail")
-
-    max_stock = _max_stock(item.product)
-    if max_stock <= 0:
-        item.delete()
-        return redirect("cart:cart_detail")
-
-    quantity = int(request.POST.get("quantity", 1))
-    if quantity < 1:
-        item.delete()
+    if _is_digital_or_service(product):
+        quantity = 1
     else:
-        item.quantity = min(quantity, max_stock)
-        item.save(update_fields=["quantity"])
+        quantity = int(request.POST.get("quantity", 1))
+
+    if request.user.is_authenticated:
+        # Authenticated users: use database
+        item = get_object_or_404(CartItem.objects.select_for_update(), user=request.user, product=product)
+
+        max_stock = _max_stock(product)
+        if max_stock <= 0:
+            item.delete()
+            return redirect("cart:cart_detail")
+
+        if quantity < 1:
+            item.delete()
+        else:
+            item.quantity = min(quantity, max_stock)
+            item.save(update_fields=["quantity"])
+    else:
+        # Anonymous users: use session
+        max_stock = _max_stock(product)
+        if max_stock <= 0:
+            remove_from_session_cart(request, pk)
+            return redirect("cart:cart_detail")
+
+        update_session_cart_quantity(request, pk, quantity)
 
     return redirect("cart:cart_detail")
 
 
-@login_required
 def cart_detail(request):
-    cart_items = (
-        CartItem.objects.filter(user=request.user, product__is_active=True)
-        .select_related("product")
-        .order_by("-added_at")
-    )
+    """
+    Cart detail page - works for both authenticated and anonymous users.
+    Anonymous users are redirected to login at checkout.
+    """
+    items = get_cart_items(request)
 
     subtotal = Decimal("0.00")
-    items = []
-
-    for ci in cart_items:
-        line_total = ci.product.price * ci.quantity
-        subtotal += line_total
-        items.append(
-            {
-                "id": ci.id,
-                "product": ci.product,
-                "quantity": ci.quantity,
-                "line_total": line_total,
-            }
-        )
+    for item in items:
+        subtotal += item["line_total"]
 
     tax = (subtotal * TAX_RATE).quantize(Decimal("0.01"))
     total_with_tax = (subtotal + tax).quantize(Decimal("0.01"))

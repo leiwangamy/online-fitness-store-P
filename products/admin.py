@@ -49,10 +49,12 @@ class ProductAdmin(admin.ModelAdmin):
         "charge_gst",
         "charge_pst",
         "is_active",
+        "is_featured",
     )
     list_filter = (
         "category",
         "is_active",
+        "is_featured",
         "charge_gst",
         "charge_pst",
         "is_digital",
@@ -63,7 +65,7 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductVideoInline, ProductAudioInline]
 
     fieldsets = (
-        ("Basic Info", {"fields": ("name", "description", "price", "is_active", "category")}),
+        ("Basic Info", {"fields": ("name", "description", "price", "is_active", "is_featured", "category")}),
         ("Tax & Stock", {"fields": ("quantity_in_stock", "charge_gst", "charge_pst")}),
         ("Digital Product", {
             "fields": ("is_digital", "digital_file", "digital_url"),

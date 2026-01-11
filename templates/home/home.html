@@ -1,389 +1,222 @@
- 
-    {% extends "base.html" %}
+{% extends "base.html" %}
 
-   {% block title %}Home | Fitness Club{% endblock %}
+{% block title %}Home | Fitness Club{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 60px 20px;
+        background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 40px;
+    }
 
-    {% block extra_css %}
+    .hero-section h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: white;
+    }
 
-   
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #d8f3dc;   /* light green */
-        }
-        
-        section {
-            margin-bottom: 30px;
-            max-width: 100%;
-        }
-        
-        h1, h2 {
-            margin-bottom: 15px;
-            word-wrap: break-word;
-        }
-        
-        button {
-            padding: 10px 18px;
-            font-size: 16px;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-        
-        /* Search and filter section */
-        form[method="get"] {
-            margin-bottom: 15px;
-        }
-        
-        input[type="text"] {
-            padding: 8px 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            min-width: 200px;
-            max-width: 100%;
-        }
-        
-        /* Category filter links */
-        .category-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .category-filters a {
-            padding: 6px 12px;
-            text-decoration: none;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #fff;
-            font-size: 14px;
-        }
-        
-        .category-filters a:hover {
-            background: #f0f0f0;
+    .hero-section .intro-text {
+        font-size: 1.3rem;
+        max-width: 600px;
+        margin: 0 auto 30px;
+        line-height: 1.6;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+
+    .hero-button {
+        padding: 14px 28px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: inline-block;
+    }
+
+    .hero-button-primary {
+        background: white;
+        color: #2d6a4f;
+    }
+
+    .hero-button-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .hero-button-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid white;
+    }
+
+    .hero-button-secondary:hover {
+        background: white;
+        color: #2d6a4f;
+    }
+
+    .featured-section {
+        margin: 50px 0;
+    }
+
+    .featured-section h2 {
+        text-align: center;
+        font-size: 2.2rem;
+        color: #2d6a4f;
+        margin-bottom: 30px;
+    }
+
+    .featured-products {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .product-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        text-align: center;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .product-card-image-wrapper {
+        width: 100%;
+        height: 200px;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .product-card-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .product-card-content {
+        padding: 12px 15px;
+    }
+
+    .product-card h3 {
+        font-size: 0.95rem;
+        margin: 0 0 8px 0;
+        color: #333;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .product-card-price {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #2d6a4f;
+        margin: 5px 0;
+    }
+
+    .product-card-link {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #2d6a4f;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .product-card-link:hover {
+        background: #1b4332;
+    }
+
+    @media (max-width: 768px) {
+        .hero-section h1 {
+            font-size: 2rem;
         }
 
-        /* Product card layout - responsive */
-        .products-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        .hero-section .intro-text {
+            font-size: 1.1rem;
+        }
+
+        .featured-products {
+            grid-template-columns: 1fr;
             gap: 20px;
-            max-width: 100%;
-        }
-        
-        .product-card {
-            border: 1px solid #ccc;
-            padding: 15px;
-            background: #fff;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            min-width: 0; /* Prevents overflow */
-        }
-        
-        .product-card h3 {
-            font-size: 1.1rem;
-            margin: 10px 0;
-            word-wrap: break-word;
-        }
-        
-        .product-card p {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #0066cc;
-            margin: 10px 0;
-        }
-        
-        .product-img {
-            width: 100%;
-            max-width: 180px;
-            height: 180px;
-            object-fit: cover;
-            display: block;
-            margin: 0 auto 10px auto;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            border: none !important;
-            outline: none !important;
-        }
-        
-        .product-img:hover {
-            opacity: 0.8;
         }
 
-        /* Remove blue border/outline from product image links */
-        .product-card .product-image-link {
-            text-decoration: none;
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        .product-card .product-image-link:focus,
-        .product-card .product-image-link:active,
-        .product-card .product-image-link:visited {
-            outline: none !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-
-        .product-card .product-image-link img {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-        
-        .product-card .view-details-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 6px 12px;
-            background: #0066cc;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .product-card .view-details-link:hover {
-            background: #0052a3;
-        }
-
-        /* Pagination styles */
-        .pagination {
-            margin-top: 30px;
-            text-align: center;
-            padding: 20px 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .pagination .step-links {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .pagination-group {
-            display: flex;
-            gap: 8px;
+        .hero-buttons {
+            flex-direction: column;
             align-items: center;
         }
-        
-        .pagination .step-links a,
-        .pagination .step-links .disabled,
-        .pagination .step-links .current {
-            padding: 8px 14px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            min-width: 60px;
-            text-align: center;
-            white-space: nowrap;
-        }
-        
-        .pagination .step-links a {
-            background: #fafafa;
-            color: #0066cc;
-        }
-        
-        .pagination .step-links a:hover {
-            background: #e0f0ff;
-        }
-        
-        .pagination .current {
-            font-weight: bold;
-            border: 1px solid #ccc;
-        }
-        
-        .pagination .disabled {
-            color: #aaa;
-            background: #f9f9f9;
-            border-style: dashed;
-            cursor: default;
-        }
-        
-        /* Responsive design for smaller screens */
-        @media (max-width: 768px) {
-            .products-container {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 15px;
-            }
-            
-            .product-card {
-                padding: 12px;
-            }
-            
-            .product-img {
-                max-width: 140px;
-                height: 140px;
-            }
-            
-            .product-card h3 {
-                font-size: 1rem;
-            }
-            
-            .pagination .step-links {
-                gap: 5px;
-                flex-wrap: wrap;
-                max-width: 100%;
-            }
-            
-            .pagination-group {
-                gap: 5px;
-            }
-            
-            .pagination .step-links a,
-            .pagination .step-links .disabled,
-            .pagination .step-links .current {
-                padding: 6px 10px;
-                font-size: 12px;
-                min-width: 50px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .products-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .product-card {
-                max-width: 100%;
-            }
-        }
-    </style>
 
+        .hero-button {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-
-<header>
+<!-- Hero Section -->
+<div class="hero-section">
     <h1>My Fitness Club</h1>
-
-    
-
-
-    <hr>
-</header>
-
-
-<!-- Membership section -->
-<section style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-    <h2 style="margin: 0; display: inline;">Welcome to the Fitness Club</h2>
-    <p style="margin: 0; display: inline;">
-        Join our membership to access classes, coaching, and exclusive discounts in our online store.
+    <p class="intro-text">
+        Welcome to your journey to better health and fitness. 
+        Discover our premium products, expert coaching, and supportive community.
     </p>
-    <a href="{% url 'members:membership_plans' %}" style="padding: 10px 18px; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; white-space: nowrap;">View Membership Plans</a>
-</section>
-
-<hr>
-
-<!-- Store section -->
-<section>
-    <h2>Featured Products</h2>
-
-    <!-- 🔍 Search bar -->
-    <form method="get" style="margin-bottom: 15px;">
-        <input type="text"
-               name="q"
-               placeholder="Search products..."
-               value="{{ search_query }}"
-               style="padding: 5px 8px; width: 220px;">
-
-        {% if selected_category %}
-            <input type="hidden" name="category" value="{{ selected_category }}">
-        {% endif %}
-
-        <button type="submit">Search</button>
-    </form>
-
-    <!-- Category filter links -->
-    <div class="category-filters">
-        {# All = no category param, but keep search if any #}
-        <a href="?{% if search_query %}q={{ search_query|urlencode }}{% endif %}"
-           {% if not selected_category %}style="font-weight:bold; background: #e0f0ff;"{% endif %}>
-            All
-        </a>
-
-        {% for cat in categories %}
-            <a href="?category={{ cat.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
-               {% if selected_category == cat.slug %}style="font-weight:bold; background: #e0f0ff;"{% endif %}>
-                {{ cat.name }}
-            </a>
-        {% endfor %}
+    <div class="hero-buttons">
+        <a href="{% url 'products:list' %}" class="hero-button hero-button-primary">Browse All Products</a>
+        <a href="{% url 'members:membership_plans' %}" class="hero-button hero-button-secondary">View Membership Plans</a>
     </div>
+</div>
 
-    {% if page_obj %}
-        {% if page_obj|length > 0 %}
-            <div class="products-container">
-                {% for product in page_obj %}
-                    <div class="product-card">
-                        <a href="{% url 'products:detail' product.pk %}" class="product-image-link" style="text-decoration: none; display: block; border: none; outline: none;">
-                            {% if product.main_image_url %}
-                                <img src="{{ product.main_image_url }}" class="product-img" alt="{{ product.name }}" onerror="console.error('Image failed to load:', this.src); this.src='/static/no-image.png'; this.onerror=null;">
-                            {% else %}
-                                <img src="/static/no-image.png" class="product-img" alt="No image">
-                            {% endif %}
-                        </a>
-
-                        <h3>{{ product.name }}</h3>
-                        <p>${{ product.price }}</p>
-                        <a href="{% url 'products:detail' product.pk %}" class="view-details-link">View Details</a>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>No products available yet. (Total products in database: {{ total_products|default:"unknown" }})</p>
-            {% if total_products > 0 %}
-                <p style="color: red; font-weight: bold;">⚠️ Products exist but may not be marked as active (is_active=True)</p>
-            {% endif %}
-        {% endif %}
-    {% else %}
-        <p>No products available yet.</p>
-    {% endif %}
-
-    <!-- Pagination -->
-    {% if page_obj and page_obj.paginator.num_pages > 1 %}
-    <div class="pagination">
-        <div class="step-links">
-            <div class="pagination-group">
-                {% if page_obj.has_previous %}
-                    <a href="?page=1{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">&laquo; first</a>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">previous</a>
+<!-- Featured Products Section -->
+{% if featured_products %}
+<div class="featured-section">
+    <h2>Featured Products</h2>
+    <div class="featured-products">
+        {% for product in featured_products %}
+        <div class="product-card">
+            <div class="product-card-image-wrapper">
+                {% if product.main_image_url %}
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" class="product-card-image">
+                {% elif product.images.all %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="product-card-image">
                 {% else %}
-                    <span class="disabled">&laquo; first</span>
-                    <span class="disabled">previous</span>
+                    <div style="color: #999; font-size: 0.9rem;">No Image</div>
                 {% endif %}
             </div>
-
-            <span class="current">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-
-            <div class="pagination-group">
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">next</a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">last &raquo;</a>
-                {% else %}
-                    <span class="disabled">next</span>
-                    <span class="disabled">last &raquo;</span>
-                {% endif %}
+            <div class="product-card-content">
+                <h3>{{ product.name }}</h3>
+                <p class="product-card-price">${{ product.price }}</p>
+                <a href="{% url 'products:detail' product.pk %}" class="product-card-link">View Details</a>
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endif %}
-
-</section>
-
+</div>
+{% endif %}
 {% endblock %}
-

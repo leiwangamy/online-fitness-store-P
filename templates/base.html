@@ -437,8 +437,13 @@
         <a href="{% url 'members:membership_plans' %}">Membership</a>
         <a href="{% url 'core:blog' %}">Blog</a>
         <a href="{% url 'core:contact' %}">Contact</a>
+        <a href="{% url 'cart:cart_detail' %}" style="position: relative;">
+          Cart
+          {% if cart_item_count > 0 %}
+            <span style="background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; font-weight: bold; position: absolute; top: -8px; right: -12px; min-width: 18px; text-align: center;">{{ cart_item_count }}</span>
+          {% endif %}
+        </a>
         {% if user.is_authenticated %}
-          <a href="{% url 'cart:cart_detail' %}">Cart</a>
           <a href="{% url 'orders:my_orders' %}">Orders</a>
         {% endif %}
         {% if user.is_authenticated %}

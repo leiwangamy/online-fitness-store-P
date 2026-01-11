@@ -6,31 +6,44 @@ from .models import Product, Category
 
 def product_list(request):
     """
-    Product list page with pagination, optional category filter via:
-    ?category=<slug>
-    ?page=<n>
+    Product list page with search, category filters, and pagination.
+    Filters:
+    - ?q=<search_query> - Search by name
+    - ?category=<slug> - Filter by category slug, or 'digital', 'services'
+    - ?page=<n> - Pagination
     """
+    search_query = request.GET.get("q", "").strip()
     selected_category = request.GET.get("category", "").strip()
 
     categories = Category.objects.all()
     # Prefetch images for efficient loading
     products = Product.objects.filter(is_active=True).select_related("category").prefetch_related("images")
 
+    # Filter by search query
+    if search_query:
+        products = products.filter(name__icontains=search_query)
+
+    # Filter by category or product type
     if selected_category:
-        products = products.filter(category__slug=selected_category)
+        if selected_category.lower() == "digital":
+            products = products.filter(is_digital=True)
+        elif selected_category.lower() == "services":
+            products = products.filter(is_service=True)
+        else:
+            products = products.filter(category__slug=selected_category)
 
     # Order by newest first
     products = products.order_by("-id")
 
-    # Paginate results (5 products per page - you can change this number)
-    paginator = Paginator(products, 5)
+    # Paginate results (6 products per page for 3x2 grid)
+    paginator = Paginator(products, 6)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    return render(request, "home/home.html", {
+    return render(request, "products/product_list.html", {
         "page_obj": page_obj,
         "categories": categories,
         "selected_category": selected_category,
-        "search_query": "",  # No search on product list page
+        "search_query": search_query,
         "total_products": products.count(),
     })
 

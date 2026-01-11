@@ -116,6 +116,7 @@ class Product(models.Model):
 
     price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text="Featured products appear on the home page")
 
     # Physical stock
     quantity_in_stock = models.PositiveIntegerField(
