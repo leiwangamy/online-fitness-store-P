@@ -66,7 +66,7 @@ Django admin interface for managing products, orders, inventory, and memberships
 git clone https://github.com/yourusername/online-fitness-store-P.git
 cd online-fitness-store-P
 
-# Using Docker (recommended)
+# Using Docker
 docker compose up -d
 
 # Or local setup
@@ -233,7 +233,7 @@ online-fitness-store/
 
    Visit `http://localhost:8000` in your browser.
 
-### Docker Setup (Recommended)
+### Docker Setup
 
 See [docs/setup/DOCKER_SETUP.md](docs/setup/DOCKER_SETUP.md) for detailed Docker setup instructions.
 
