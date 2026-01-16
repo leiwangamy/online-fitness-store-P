@@ -8,7 +8,7 @@
 ![License](https://img.shields.io/badge/License-Educational-lightgrey)
 
 
-A comprehensive Django-based e-commerce platform for selling fitness products, digital downloads, and services. This project demonstrates a full-stack web application with user authentication, product management, shopping cart, order processing, and deployment to AWS EC2.
+A production-ready Django e-commerce platform for fitness products, digital downloads, and services. Features include user authentication, multi-product type management, shopping cart, order processing, and AWS EC2 deployment.
 
 ## 🔐 Demo Access
 
@@ -49,39 +49,15 @@ Django admin interface for managing products, orders, inventory, and memberships
 
 ## 🚀 Features
 
-### Product Management
-- **Multiple Product Types**: Physical products, digital downloads, and services
-- **Product Categories**: Organize products by category
-- **Image & Media Support**: Product images, videos, and audio files
-- **Inventory Management**: Track stock levels for physical products
-- **Service Booking**: Manage service seats and availability
-
-### User Features
-- **User Authentication**: Sign up, login, logout with email verification
-- **User Profiles**: Manage shipping addresses and account settings
-- **Shopping Cart**: Add/remove items, update quantities
-- **Order Management**: View order history and download digital products
-- **Membership System**: Track user memberships and subscriptions
-
-### Checkout & Payment
-- **Flexible Checkout**: 
-  - Physical products: Shipping or pickup options
-  - Digital/Service products: Simplified checkout (no shipping required)
-- **Pickup Locations**: Multiple pickup locations for local orders
-- **Tax Calculation**: Automatic GST/HST calculation
-- **Shipping Options**: Flat rate or free shipping over threshold
-
-### Admin Features
-- **Django Admin Panel**: Full CRUD operations for all models
-- **Order Management**: View and manage orders with pickup location details
-- **Product Administration**: Manage products, categories, and inventory
-- **User Management**: View and manage user accounts
-
-### Deployment
-- **Docker Containerization**: Production-ready Docker setup
-- **Nginx Reverse Proxy**: SSL/HTTPS support with automatic HTTP to HTTPS redirect
-- **AWS EC2 Deployment**: Complete deployment guide for cloud hosting
-- **Database**: PostgreSQL for production, SQLite for development
+### Core Features
+- **Multi-Product Types**: Physical products, digital downloads, and bookable services
+- **Smart Shopping Cart**: Session-based cart for anonymous users, transfers to database on login
+- **Flexible Checkout**: Adaptive checkout flow (shipping for physical, instant for digital/services)
+- **Inventory Management**: Real-time stock tracking and service seat management
+- **User Authentication**: Email verification, profiles, and membership tracking
+- **Admin Dashboard**: Full CRUD operations with Django admin customization
+- **Order Processing**: Digital download links, pickup locations, tax calculation
+- **Production Ready**: Docker containerization, Nginx reverse proxy, AWS EC2 deployment
 
 ## ⚡ Quick Start
 
@@ -117,7 +93,6 @@ Visit `http://localhost:8000` in your browser.
 - [Configuration](#-configuration)
 - [Development](#-development)
 - [Deployment](#-deployment)
-- [Key Challenges & Solutions](#-key-challenges--solutions)
 - [Documentation](#-documentation)
 - [Contributing](#-contributing)
 
@@ -151,12 +126,11 @@ Visit `http://localhost:8000` in your browser.
 - **Scalability**: Docker containerization, Nginx reverse proxy, static file optimization with WhiteNoise
 
 ### Technical Highlights
-- **Anonymous Cart**: Session-based cart for non-authenticated users, seamlessly transfers to database cart upon login using Django signals
-- **Dynamic Checkout**: Conditional checkout flow that adapts based on product types (shipping for physical, instant for digital/services)
-- **Media Management**: Multi-image support with main image selection and media gallery
-- **Featured Products**: Admin-configurable featured products with singleton pattern for content management
-- **Search & Filtering**: Full-text search with category filtering and pagination
-- **Context Processors**: Global cart item count available across all templates
+- Session-based anonymous cart with automatic transfer to database on login
+- Dynamic checkout flow adapting to product types
+- Multi-image product galleries with main image selection
+- Admin-configurable featured products with singleton content management
+- Full-text search with category filtering and pagination
 
 ## 📁 Project Structure
 
@@ -360,95 +334,23 @@ Quick steps:
 
 All documentation is organized in the `docs/` folder. See [docs/README.md](docs/README.md) for a complete index.
 
-**Quick Links:**
-- **[Project Structure](docs/PROJECT_STRUCTURE.md)**: Detailed project organization and file structure
-- **[Code Documentation](docs/CODE_DOCUMENTATION.md)**: Code documentation guide and standards
-- **[AWS Deployment](docs/deployment/AWS_DEPLOYMENT.md)**: Complete AWS EC2 deployment guide
-- **[Docker Setup](docs/setup/DOCKER_SETUP.md)**: Docker setup and configuration
-- **[Nginx Setup](docs/setup/NGINX_SETUP.md)**: Nginx reverse proxy configuration
-- **[HTTPS Setup](docs/setup/HTTPS_SETUP.md)**: SSL/HTTPS setup guide
-- **[Pickup Location Setup](docs/setup/PICKUP_LOCATION_SETUP.md)**: Pickup location feature guide
-- **[Email Verification](docs/setup/EMAIL_VERIFICATION.md)**: Email verification setup
-- **[Database Setup](docs/setup/DATABASE_SETUP.md)**: Database configuration
+**Essential Guides:**
+- **[AWS Deployment](docs/deployment/AWS_DEPLOYMENT.md)**: Complete EC2 deployment guide
+- **[Docker Setup](docs/setup/DOCKER_SETUP.md)**: Containerization and configuration
+- **[Project Structure](docs/PROJECT_STRUCTURE.md)**: Project organization and architecture
 
-**Organized Documentation:**
-- **[Deployment Guides](docs/deployment/)**: All deployment-related documentation
-- **[Setup Guides](docs/setup/)**: Configuration and setup instructions
-- **[User Guides](docs/guides/)**: Testing, migration, and feature guides
+**Additional Resources:**
+- **[Deployment Guides](docs/deployment/)**: All deployment documentation
+- **[Setup Guides](docs/setup/)**: Configuration instructions
+- **[User Guides](docs/guides/)**: Testing and feature guides
 
-## 🎯 Key Features Implementation
+## 🎯 Product Types & Checkout
 
-### Product Types
+**Physical Products**: Stock management, shipping/pickup options, address collection  
+**Digital Products**: Instant download with secure link generation and email delivery  
+**Service Products**: Seat management with date/time scheduling
 
-The system supports three product types:
-
-1. **Physical Products**: Require shipping or pickup
-   - Stock management
-   - Shipping cost calculation
-   - Pickup location selection
-
-2. **Digital Products**: Instant download
-   - File or URL-based delivery
-   - Download link generation with expiry
-   - Email delivery
-
-3. **Service Products**: Bookable services
-   - Seat management
-   - Date/time scheduling
-   - Location information
-
-### Checkout Flow
-
-- **Physical Products**: Shows shipping/pickup options and address form
-- **Digital/Service Only**: Simplified checkout (order summary only)
-- **Mixed Cart**: Full checkout with shipping options
-
-### Order Processing
-
-1. User adds items to cart
-2. Proceeds to checkout
-3. Selects fulfillment method (shipping/pickup for physical products)
-4. Places order
-5. Order created with status "paid" (simulated payment)
-6. Digital products: Download links generated and emailed
-7. Services: Seats deducted from availability
-
-## 💡 Key Challenges & Solutions
-
-### Challenge: Anonymous Cart Management
-**Problem**: Users should be able to add items to cart before signing in, but cart data needs to persist after login.
-
-**Solution**: 
-- Implemented session-based cart storage for anonymous users
-- Created utility functions (`cart/utils.py`) to manage both session and database carts
-- Used Django signals to automatically transfer session cart items to user's database cart upon login
-- Created context processor to display cart item count globally across all templates
-
-### Challenge: Multi-Product Type Checkout
-**Problem**: Different product types (physical, digital, service) require different checkout flows and validation.
-
-**Solution**: 
-- Created conditional checkout logic that adapts based on cart contents
-- Physical products: Full checkout with shipping/pickup options and address form
-- Digital/Service only: Simplified checkout (order summary only, no shipping)
-- Mixed cart: Full checkout with shipping options for physical items
-
-### Challenge: Featured Products Management
-**Problem**: Admin needs flexible way to manage featured products and customize section content.
-
-**Solution**: 
-- Added `is_featured` boolean flag to Product model for easy admin control
-- Created singleton pattern model (`FeaturedProductsContent`) for admin-editable title and description
-- Implemented efficient querying with `select_related` and `prefetch_related` for optimal performance
-- Limited featured products display to 3 items on home page
-
-### Challenge: Product Image Display
-**Problem**: Product images were being cropped and not displaying completely.
-
-**Solution**: 
-- Changed CSS from `object-fit: cover` to `object-fit: contain`
-- Added white padding wrapper around images to ensure full visibility
-- Implemented responsive image sizing with proper aspect ratio preservation
+The checkout flow automatically adapts: full checkout with shipping for physical products, simplified checkout for digital/services only, and mixed cart support.
 
 ## 🤝 Contributing
 
@@ -462,18 +364,7 @@ This is a learning project. Feel free to:
 
 This project is for educational purposes.
 
-## 🙏 Acknowledgments
-
-Built with Django, Docker, and modern web technologies. Special thanks to the Django community for excellent documentation and tools.
-
-## 📞 Support
-
-For questions or issues:
-- Check the [documentation](docs/) folder
-- Review the code comments (extensively documented)
-- Open an issue on GitHub
-
 ---
 
-**Note**: This project is production-ready and includes comprehensive error handling, security best practices, and deployment configurations. All code is well-documented for learning purposes.
+**Built with Django, Docker, and modern web technologies. Production-ready with comprehensive error handling, security best practices, and deployment configurations.**
 
