@@ -52,6 +52,40 @@
     </form>
 </div>
 
+<div style="margin: 30px 0; padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px;">
+    <h2>Cleanup Old Backups</h2>
+    <p style="margin-bottom: 15px; color: #555;">
+        Delete old backup files from the server. This only affects local copies - backups in S3 are not affected.
+    </p>
+    <form method="post" action="{% url 'admin_backup_database' %}" style="margin-top: 15px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cleanup">
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px;">
+                <strong>Keep most recent:</strong>
+                <input type="number" name="keep_count" value="5" min="1" max="20" style="width: 60px; margin-left: 10px; padding: 5px;">
+                backups
+            </label>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" name="delete_empty" checked>
+                <span>Delete empty backup files (0.00 MB)</span>
+            </label>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px;">
+                <strong>Also delete backups older than:</strong>
+                <input type="number" name="days_old" value="" min="1" placeholder="days (optional)" style="width: 100px; margin-left: 10px; padding: 5px;">
+                days (leave empty to keep all non-empty backups)
+            </label>
+        </div>
+        <button type="submit" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+            Cleanup Old Backups
+        </button>
+    </form>
+</div>
+
 {% if backups %}
 <div style="margin: 30px 0;">
     <h2>Recent Backups (Available for Download)</h2>

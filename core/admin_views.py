@@ -125,6 +125,75 @@ def cleanup_old_backups(backup_dir, keep_count=5):
                 pass  # Ignore errors when deleting old backups
 
 
+def delete_old_backups(keep_count=5, delete_empty=True, days_old=None):
+    """
+    Delete old backup files
+    
+    Args:
+        keep_count: Number of most recent backups to keep (default: 5)
+        delete_empty: Whether to delete empty backup files (default: True)
+        days_old: Delete backups older than this many days (optional)
+    
+    Returns:
+        (deleted_count: int, deleted_files: list, error_message: str or None)
+    """
+    backup_dir = get_backup_dir()
+    deleted_files = []
+    deleted_count = 0
+    
+    try:
+        backups = list(backup_dir.glob("*.backup"))
+        
+        # Delete empty backups first if requested
+        if delete_empty:
+            for backup in backups[:]:  # Use slice copy to modify list while iterating
+                try:
+                    if backup.stat().st_size == 0:
+                        backup.unlink()
+                        deleted_files.append(backup.name)
+                        deleted_count += 1
+                        backups.remove(backup)
+                except Exception as e:
+                    pass  # Ignore errors
+        
+        # Delete backups older than specified days
+        if days_old:
+            from datetime import timedelta
+            cutoff_date = datetime.now() - timedelta(days=days_old)
+            for backup in backups[:]:
+                try:
+                    backup_time = datetime.fromtimestamp(backup.stat().st_mtime)
+                    if backup_time < cutoff_date:
+                        backup.unlink()
+                        deleted_files.append(backup.name)
+                        deleted_count += 1
+                        backups.remove(backup)
+                except Exception as e:
+                    pass  # Ignore errors
+        
+        # Keep only the most recent N backups
+        if len(backups) > keep_count:
+            backups_sorted = sorted(
+                backups,
+                key=lambda f: f.stat().st_mtime,
+                reverse=True
+            )
+            backups_to_delete = backups_sorted[keep_count:]
+            
+            for old_backup in backups_to_delete:
+                try:
+                    old_backup.unlink()
+                    deleted_files.append(old_backup.name)
+                    deleted_count += 1
+                except Exception as e:
+                    pass  # Ignore errors
+        
+        return deleted_count, deleted_files, None
+        
+    except Exception as e:
+        return deleted_count, deleted_files, f"Error during cleanup: {str(e)}"
+
+
 def upload_to_s3(backup_file):
     """
     Upload backup file to S3 from EC2 server
@@ -185,8 +254,53 @@ def upload_to_s3(backup_file):
 
 
 @staff_member_required
+def cleanup_backups(request):
+    """Admin view to manually clean up old backups"""
+    if request.method != 'POST':
+        return HttpResponseRedirect(reverse('admin_backup_database'))
+    
+    try:
+        keep_count = int(request.POST.get('keep_count', 5))
+        delete_empty = request.POST.get('delete_empty') == 'on'
+        days_old = request.POST.get('days_old', '').strip()
+        days_old = int(days_old) if days_old and days_old.isdigit() else None
+        
+        deleted_count, deleted_files, error = delete_old_backups(
+            keep_count=keep_count,
+            delete_empty=delete_empty,
+            days_old=days_old
+        )
+        
+        if error:
+            messages.error(request, error)
+        else:
+            if deleted_count > 0:
+                file_list = ', '.join(deleted_files[:5])
+                if len(deleted_files) > 5:
+                    file_list += f" and {len(deleted_files) - 5} more"
+                messages.success(
+                    request, 
+                    f"Successfully deleted {deleted_count} backup file(s): {file_list}"
+                )
+            else:
+                messages.info(request, "No backups were deleted. All backups are within the retention policy.")
+        
+    except ValueError:
+        messages.error(request, "Invalid input. Please enter valid numbers.")
+    except Exception as e:
+        messages.error(request, f"Error during cleanup: {str(e)}")
+    
+    return HttpResponseRedirect(reverse('admin_backup_database'))
+
+
+@staff_member_required
 def backup_database(request):
     """Admin view to create database backup on EC2 server and upload to S3"""
+    if request.method == 'POST' and 'action' in request.POST:
+        # Handle cleanup action
+        if request.POST['action'] == 'cleanup':
+            return cleanup_backups(request)
+    
     if request.method == 'POST':
         # Create backup on EC2 server
         success, backup_file, message = create_backup()
