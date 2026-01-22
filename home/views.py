@@ -21,13 +21,13 @@ def home(request):
     except (ImportError, AttributeError, Exception):
         content = None
     
-    # Get latest blog posts (limit to 3)
+    # Get latest blog posts (limit to 1)
     latest_blog_posts = None
     try:
         from core.models import BlogPost
         latest_blog_posts = BlogPost.objects.filter(
             is_published=True
-        ).prefetch_related('images')[:3]
+        ).prefetch_related('images')[:1]
     except (ImportError, AttributeError, Exception):
         latest_blog_posts = None
     
