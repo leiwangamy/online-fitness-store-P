@@ -5,7 +5,7 @@ from products.models import Product, Category
 
 def home(request):
     """
-    Home page with hero section and featured products
+    Home page with hero section, featured products, and latest blog posts
     """
     # Get featured products (limit to 3)
     featured_products = Product.objects.filter(
@@ -21,9 +21,20 @@ def home(request):
     except (ImportError, AttributeError, Exception):
         content = None
     
+    # Get latest blog posts (limit to 3)
+    latest_blog_posts = None
+    try:
+        from core.models import BlogPost
+        latest_blog_posts = BlogPost.objects.filter(
+            is_published=True
+        ).prefetch_related('images')[:3]
+    except (ImportError, AttributeError, Exception):
+        latest_blog_posts = None
+    
     context = {
         "featured_products": featured_products,
         "content": content,
+        "latest_blog_posts": latest_blog_posts,
     }
     
     return render(request, "home/home.html", context)
