@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Database Backup | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a>
+    &rsaquo; Database Backup
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>Database Backup</h1>
+
+<div style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+    <h2>Create New Backup</h2>
+    <p style="margin-bottom: 15px; color: #555;">
+        This will create a backup on the EC2 server and automatically upload it to S3.
+        You can then download a copy to your computer if needed.
+    </p>
+    {% if not s3_available %}
+    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; margin-bottom: 15px;">
+        <strong>⚠️ Warning:</strong> boto3 is not installed. Install it with: <code>pip install boto3</code>
+    </div>
+    {% elif not s3_configured %}
+    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; margin-bottom: 15px;">
+        <strong>⚠️ Warning:</strong> S3 not configured. Set these environment variables:
+        <ul style="margin: 10px 0 0 20px;">
+            <li>AWS_ACCESS_KEY_ID</li>
+            <li>AWS_SECRET_ACCESS_KEY</li>
+            <li>AWS_STORAGE_BUCKET_NAME</li>
+            <li>AWS_REGION (defaults to ca-central-1)</li>
+            <li>AWS_BACKUP_PREFIX (defaults to db-backups/)</li>
+        </ul>
+    </div>
+    {% endif %}
+    <form method="post" action="{% url 'admin_backup_database' %}">
+        {% csrf_token %}
+        <button type="submit" style="padding: 10px 20px; background: #417690; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+            Create Backup & Upload to S3
+        </button>
+    </form>
+</div>
+
+{% if backups %}
+<div style="margin: 30px 0;">
+    <h2>Recent Backups (Available for Download)</h2>
+    <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+        <em>Note: These are temporary copies on the server. All backups are automatically uploaded to S3.</em>
+    </p>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+        <thead>
+            <tr style="background: #f0f0f0;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Filename</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Size</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Created</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for backup in backups %}
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ backup.filename }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ backup.size_mb|floatformat:2 }} MB</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ backup.created|date:"Y-m-d H:i:s" }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    <a href="{% url 'admin_backup_download' backup.filename %}" style="color: #417690; text-decoration: none;">
+                        Download Copy
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div style="margin: 20px 0; padding: 15px; background: #e7f3ff; border: 1px solid #417690; border-radius: 5px;">
+    <p>No recent backups available for download. Create a new backup above. All backups are stored in S3.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
