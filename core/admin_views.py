@@ -55,16 +55,13 @@ def create_backup():
     
     # Determine pg_dump command
     if is_docker:
-        # Running in Docker - try docker compose exec first, then docker exec
-        container_name = os.environ.get('DB_CONTAINER_NAME', 'fitness_db_prod')
-        
-        # Try docker compose exec first (for docker-compose setups)
+        # Running in Docker - use docker compose exec to run pg_dump inside db container
         compose_cmd = [
             'docker', 'compose', '-f', 'docker-compose.prod.yml', 'exec', '-T', 'db',
             'pg_dump',
             '-U', db_user,
-            '-F', 'c',
-            '-b',
+            '-F', 'c',  # Custom format (compressed)
+            '-b',      # Include blobs
             db_name
         ]
         
@@ -75,13 +72,25 @@ def create_backup():
                     env=env,
                     stdout=f,
                     stderr=subprocess.PIPE,
-                    timeout=300
+                    timeout=300,
+                    cwd=settings.BASE_DIR  # Run from project root
                 )
             
-            if result.returncode == 0:
+            # Check if backup file was created and has content
+            if not backup_file.exists():
+                return False, None, "Backup file was not created"
+            
+            file_size = backup_file.stat().st_size
+            if file_size == 0:
+                # Clean up empty backup file
+                backup_file.unlink()
+                error_msg = result.stderr.decode() if result.stderr else "Backup file is empty"
+                return False, None, f"Backup failed: {error_msg}"
+            
+            if result.returncode == 0 and file_size > 0:
                 # Clean up old backups
                 cleanup_old_backups(backup_dir, keep_count=5)
-                file_size_mb = backup_file.stat().st_size / (1024 * 1024)
+                file_size_mb = file_size / (1024 * 1024)
                 return True, backup_file, f"Backup created successfully ({file_size_mb:.2f} MB)"
             else:
                 error_msg = result.stderr.decode() if result.stderr else "Unknown error"
@@ -90,15 +99,18 @@ def create_backup():
                     backup_file.unlink()
                 return False, None, f"Backup failed: {error_msg}"
         except FileNotFoundError:
-            # docker compose not found, try regular docker exec
-            pass
+            return False, None, "docker compose not found. Make sure Docker Compose is installed."
+        except subprocess.TimeoutExpired:
+            if backup_file.exists():
+                backup_file.unlink()
+            return False, None, "Backup timed out after 5 minutes"
         except Exception as e:
             # Clean up failed backup file
             if backup_file.exists():
                 backup_file.unlink()
             return False, None, f"Error creating backup: {str(e)}"
     
-    # Fallback: use pg_dump directly (works for local and some Docker setups)
+    # Fallback: use pg_dump directly (works for local setups)
     pg_dump_path = os.getenv('PG_DUMP_PATH', 'pg_dump')
     command = [
         pg_dump_path,
@@ -120,21 +132,37 @@ def create_backup():
             timeout=300  # 5 minute timeout
         )
         
-        if result.returncode == 0:
+        # Check if backup file was created and has content
+        if not backup_file.exists():
+            return False, None, "Backup file was not created"
+        
+        file_size = backup_file.stat().st_size
+        if file_size == 0:
+            backup_file.unlink()
+            error_msg = result.stderr or result.stdout or "Backup file is empty"
+            return False, None, f"Backup failed: {error_msg}"
+        
+        if result.returncode == 0 and file_size > 0:
             # Clean up old backups (keep only 5 most recent)
             cleanup_old_backups(backup_dir, keep_count=5)
             
-            file_size_mb = backup_file.stat().st_size / (1024 * 1024)
+            file_size_mb = file_size / (1024 * 1024)
             return True, backup_file, f"Backup created successfully ({file_size_mb:.2f} MB)"
         else:
             error_msg = result.stderr or result.stdout or "Unknown error"
+            if backup_file.exists():
+                backup_file.unlink()
             return False, None, f"Backup failed: {error_msg}"
             
     except subprocess.TimeoutExpired:
+        if backup_file.exists():
+            backup_file.unlink()
         return False, None, "Backup timed out after 5 minutes"
     except FileNotFoundError:
         return False, None, f"pg_dump not found. Please install PostgreSQL client tools or set PG_DUMP_PATH environment variable."
     except Exception as e:
+        if backup_file.exists():
+            backup_file.unlink()
         return False, None, f"Error creating backup: {str(e)}"
 
 
@@ -221,22 +249,26 @@ def backup_database(request):
         success, backup_file, message = create_backup()
         
         if success:
-            messages.success(request, message)
-            
-            # Always upload to S3 from EC2 server
-            s3_success, s3_url, s3_message = upload_to_s3(backup_file)
-            if s3_success:
-                messages.success(request, s3_message)
-                # Keep the file temporarily for download option
-                # It will be cleaned up by the cleanup_old_backups function
+            # Verify backup file exists and has content before uploading
+            if backup_file.exists() and backup_file.stat().st_size > 0:
+                messages.success(request, message)
+                
+                # Always upload to S3 from EC2 server
+                s3_success, s3_url, s3_message = upload_to_s3(backup_file)
+                if s3_success:
+                    messages.success(request, s3_message)
+                    # Keep the file temporarily for download option
+                    # It will be cleaned up by the cleanup_old_backups function
+                else:
+                    messages.warning(request, f"S3 upload failed: {s3_message}")
+                    # Still allow download even if S3 upload failed
+                
+                # Redirect to download page
+                return HttpResponseRedirect(
+                    reverse('admin_backup_download', kwargs={'filename': backup_file.name})
+                )
             else:
-                messages.error(request, f"S3 upload failed: {s3_message}")
-                # Still allow download even if S3 upload failed
-            
-            # Redirect to download page
-            return HttpResponseRedirect(
-                reverse('admin_backup_download', kwargs={'filename': backup_file.name})
-            )
+                messages.error(request, "Backup file is empty or was not created properly.")
         else:
             messages.error(request, message)
     
