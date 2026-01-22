@@ -16,7 +16,6 @@ urlpatterns = [
     path("health/", health_check, name="health"),
     path("", include("core.admin_urls")),  # Admin backup URLs (must come before admin.site.urls)
     path("admin/", admin.site.urls),
-]
 
     # Include accounts app first so it can override allauth URLs (accessed with namespace "accounts")
     # Then include allauth for login/signup etc. (accessed without namespace as 'account_login', 'account_signup')
