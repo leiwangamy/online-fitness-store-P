@@ -102,7 +102,7 @@ def create_backup():
             backup_file.unlink()
         return False, None, "Backup timed out after 5 minutes"
     except FileNotFoundError:
-        return False, None, f"pg_dump not found. PostgreSQL client tools are being installed in the container. Please rebuild: docker compose -f docker-compose.prod.yml build web"
+        return False, None, f"pg_dump not found. Please rebuild the web container to install PostgreSQL client tools: docker compose -f docker-compose.prod.yml build web && docker compose -f docker-compose.prod.yml up -d"
     except Exception as e:
         if backup_file.exists():
             backup_file.unlink()
@@ -127,7 +127,7 @@ def cleanup_old_backups(backup_dir, keep_count=5):
 
 def delete_old_backups(keep_count=5, delete_empty=True, days_old=None):
     """
-    Delete old backup files
+    Delete old backup files with safety checks
     
     Args:
         keep_count: Number of most recent backups to keep (default: 5)
@@ -144,34 +144,52 @@ def delete_old_backups(keep_count=5, delete_empty=True, days_old=None):
     try:
         backups = list(backup_dir.glob("*.backup"))
         
+        if not backups:
+            return 0, [], None
+        
+        # Safety check: Don't delete if we have fewer backups than keep_count
+        non_empty_backups = [b for b in backups if b.stat().st_size > 0]
+        if len(non_empty_backups) <= keep_count and not delete_empty:
+            return 0, [], "Not enough backups to delete. All backups are within retention policy."
+        
         # Delete empty backups first if requested
         if delete_empty:
-            for backup in backups[:]:  # Use slice copy to modify list while iterating
+            empty_backups = [b for b in backups if b.stat().st_size == 0]
+            for backup in empty_backups:
                 try:
-                    if backup.stat().st_size == 0:
-                        backup.unlink()
-                        deleted_files.append(backup.name)
-                        deleted_count += 1
-                        backups.remove(backup)
+                    backup.unlink()
+                    deleted_files.append(backup.name)
+                    deleted_count += 1
+                    backups.remove(backup)
                 except Exception as e:
                     pass  # Ignore errors
         
-        # Delete backups older than specified days
-        if days_old:
+        # Delete backups older than specified days (only if days_old is set)
+        if days_old and days_old > 0:
             from datetime import timedelta
             cutoff_date = datetime.now() - timedelta(days=days_old)
-            for backup in backups[:]:
+            backups_to_delete_by_age = []
+            for backup in backups:
                 try:
                     backup_time = datetime.fromtimestamp(backup.stat().st_mtime)
                     if backup_time < cutoff_date:
-                        backup.unlink()
-                        deleted_files.append(backup.name)
+                        backups_to_delete_by_age.append(backup)
+                except Exception:
+                    pass
+            
+            # Only delete if we'll still have at least keep_count backups remaining
+            remaining_after_age_delete = len(backups) - len(backups_to_delete_by_age)
+            if remaining_after_age_delete >= keep_count:
+                for old_backup in backups_to_delete_by_age:
+                    try:
+                        old_backup.unlink()
+                        deleted_files.append(old_backup.name)
                         deleted_count += 1
-                        backups.remove(backup)
-                except Exception as e:
-                    pass  # Ignore errors
+                        backups.remove(old_backup)
+                    except Exception:
+                        pass
         
-        # Keep only the most recent N backups
+        # Keep only the most recent N backups (only delete if we have more than keep_count)
         if len(backups) > keep_count:
             backups_sorted = sorted(
                 backups,
@@ -185,7 +203,7 @@ def delete_old_backups(keep_count=5, delete_empty=True, days_old=None):
                     old_backup.unlink()
                     deleted_files.append(old_backup.name)
                     deleted_count += 1
-                except Exception as e:
+                except Exception:
                     pass  # Ignore errors
         
         return deleted_count, deleted_files, None
