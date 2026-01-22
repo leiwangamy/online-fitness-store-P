@@ -45,80 +45,22 @@ def create_backup():
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_file = backup_dir / f"{db_name}_{timestamp}.backup"
     
-    # Check if running in Docker (check if db_host is 'db' which is typical Docker Compose service name)
-    is_docker = db_host == 'db' or os.path.exists('/.dockerenv')
-    
     # Set up environment
     env = os.environ.copy()
     if db_password:
         env["PGPASSWORD"] = db_password
     
-    # Determine pg_dump command
-    if is_docker:
-        # Running in Docker - use docker compose exec to run pg_dump inside db container
-        compose_cmd = [
-            'docker', 'compose', '-f', 'docker-compose.prod.yml', 'exec', '-T', 'db',
-            'pg_dump',
-            '-U', db_user,
-            '-F', 'c',  # Custom format (compressed)
-            '-b',      # Include blobs
-            db_name
-        ]
-        
-        try:
-            with open(backup_file, 'wb') as f:
-                result = subprocess.run(
-                    compose_cmd,
-                    env=env,
-                    stdout=f,
-                    stderr=subprocess.PIPE,
-                    timeout=300,
-                    cwd=settings.BASE_DIR  # Run from project root
-                )
-            
-            # Check if backup file was created and has content
-            if not backup_file.exists():
-                return False, None, "Backup file was not created"
-            
-            file_size = backup_file.stat().st_size
-            if file_size == 0:
-                # Clean up empty backup file
-                backup_file.unlink()
-                error_msg = result.stderr.decode() if result.stderr else "Backup file is empty"
-                return False, None, f"Backup failed: {error_msg}"
-            
-            if result.returncode == 0 and file_size > 0:
-                # Clean up old backups
-                cleanup_old_backups(backup_dir, keep_count=5)
-                file_size_mb = file_size / (1024 * 1024)
-                return True, backup_file, f"Backup created successfully ({file_size_mb:.2f} MB)"
-            else:
-                error_msg = result.stderr.decode() if result.stderr else "Unknown error"
-                # Clean up failed backup file
-                if backup_file.exists():
-                    backup_file.unlink()
-                return False, None, f"Backup failed: {error_msg}"
-        except FileNotFoundError:
-            return False, None, "docker compose not found. Make sure Docker Compose is installed."
-        except subprocess.TimeoutExpired:
-            if backup_file.exists():
-                backup_file.unlink()
-            return False, None, "Backup timed out after 5 minutes"
-        except Exception as e:
-            # Clean up failed backup file
-            if backup_file.exists():
-                backup_file.unlink()
-            return False, None, f"Error creating backup: {str(e)}"
-    
-    # Fallback: use pg_dump directly (works for local setups)
+    # Use pg_dump directly - it's installed in the web container
+    # In Docker, containers can connect to each other using service names (e.g., 'db')
+    # For local development, use localhost or the configured host
     pg_dump_path = os.getenv('PG_DUMP_PATH', 'pg_dump')
     command = [
         pg_dump_path,
         '-U', db_user,
-        '-h', db_host,
+        '-h', db_host,  # This will be 'db' in Docker, 'localhost' locally
         '-p', db_port,
-        '-F', 'c',
-        '-b',
+        '-F', 'c',  # Custom format (compressed)
+        '-b',      # Include blobs
         '-f', str(backup_file),
         db_name
     ]
@@ -134,7 +76,8 @@ def create_backup():
         
         # Check if backup file was created and has content
         if not backup_file.exists():
-            return False, None, "Backup file was not created"
+            error_msg = result.stderr or result.stdout or "Backup file was not created"
+            return False, None, f"Backup failed: {error_msg}"
         
         file_size = backup_file.stat().st_size
         if file_size == 0:
@@ -159,7 +102,7 @@ def create_backup():
             backup_file.unlink()
         return False, None, "Backup timed out after 5 minutes"
     except FileNotFoundError:
-        return False, None, f"pg_dump not found. Please install PostgreSQL client tools or set PG_DUMP_PATH environment variable."
+        return False, None, f"pg_dump not found. PostgreSQL client tools are being installed in the container. Please rebuild: docker compose -f docker-compose.prod.yml build web"
     except Exception as e:
         if backup_file.exists():
             backup_file.unlink()
