@@ -157,28 +157,39 @@ def cleanup_old_backups(backup_dir, keep_count=5):
 def upload_to_s3(backup_file):
     """
     Upload backup file to S3 from EC2 server
+    Uses IAM role credentials if available, otherwise falls back to access keys
     Returns: (success: bool, s3_url: str or None, error_message: str or None)
     """
     if not S3_AVAILABLE:
         return False, None, "boto3 is not installed. Install it with: pip install boto3"
     
     # Get S3 settings from environment
-    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
-    aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
     aws_region = os.environ.get('AWS_REGION', 'ca-central-1')
     bucket_name = os.environ.get('AWS_STORAGE_BUCKET_NAME')
     backup_prefix = os.environ.get('AWS_BACKUP_PREFIX', 'db-backups/')
     
-    if not all([aws_access_key_id, aws_secret_access_key, bucket_name]):
-        return False, None, "S3 credentials not configured. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_STORAGE_BUCKET_NAME environment variables."
+    if not bucket_name:
+        return False, None, "S3 bucket not configured. Set AWS_STORAGE_BUCKET_NAME environment variable."
+    
+    # Check if using IAM role (no access keys) or explicit credentials
+    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+    aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    use_iam_role = not (aws_access_key_id and aws_secret_access_key)
     
     try:
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            region_name=aws_region
-        )
+        # If IAM role is available, boto3 will automatically use it
+        # Otherwise, use explicit credentials if provided
+        if use_iam_role:
+            # Use IAM role (boto3 will automatically use instance profile credentials)
+            s3_client = boto3.client('s3', region_name=aws_region)
+        else:
+            # Use explicit credentials
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                region_name=aws_region
+            )
         
         # Ensure prefix ends with /
         if not backup_prefix.endswith('/'):
@@ -246,14 +257,23 @@ def backup_database(request):
             'created': datetime.fromtimestamp(backup.stat().st_mtime)
         })
     
+    # Check S3 configuration (IAM role or access keys)
+    bucket_name = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+    aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    
+    # S3 is configured if bucket name is set AND (IAM role available OR access keys provided)
+    s3_configured = bool(bucket_name) and (
+        bool(aws_access_key_id and aws_secret_access_key) or 
+        # IAM role will be automatically used if no access keys are provided
+        (not aws_access_key_id and not aws_secret_access_key)
+    )
+    
     context = {
         'backups': backup_list,
         's3_available': S3_AVAILABLE,
-        's3_configured': all([
-            os.environ.get('AWS_ACCESS_KEY_ID'),
-            os.environ.get('AWS_SECRET_ACCESS_KEY'),
-            os.environ.get('AWS_STORAGE_BUCKET_NAME')
-        ]) if S3_AVAILABLE else False,
+        's3_configured': s3_configured if S3_AVAILABLE else False,
+        'using_iam_role': bool(bucket_name) and not (aws_access_key_id and aws_secret_access_key),
     }
     
     return render(request, 'admin/backup_database.html', context)

@@ -27,12 +27,21 @@
     <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; margin-bottom: 15px;">
         <strong>⚠️ Warning:</strong> S3 not configured. Set these environment variables:
         <ul style="margin: 10px 0 0 20px;">
-            <li>AWS_ACCESS_KEY_ID</li>
-            <li>AWS_SECRET_ACCESS_KEY</li>
-            <li>AWS_STORAGE_BUCKET_NAME</li>
+            <li><strong>AWS_STORAGE_BUCKET_NAME</strong> (required)</li>
             <li>AWS_REGION (defaults to ca-central-1)</li>
             <li>AWS_BACKUP_PREFIX (defaults to db-backups/)</li>
         </ul>
+        <p style="margin: 10px 0 0 0; font-size: 0.9em;">
+            <strong>Authentication:</strong> Use either IAM role (recommended) or access keys:
+        </p>
+        <ul style="margin: 5px 0 0 20px; font-size: 0.9em;">
+            <li><strong>IAM Role:</strong> Attach IAM role to EC2 instance with S3 permissions (no access keys needed)</li>
+            <li><strong>Access Keys:</strong> Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY</li>
+        </ul>
+    </div>
+    {% elif using_iam_role %}
+    <div style="padding: 15px; background: #d4edda; border: 1px solid #28a745; border-radius: 4px; margin-bottom: 15px;">
+        <strong>✅ Using IAM Role:</strong> S3 access configured via EC2 instance IAM role (most secure method).
     </div>
     {% endif %}
     <form method="post" action="{% url 'admin_backup_database' %}">
