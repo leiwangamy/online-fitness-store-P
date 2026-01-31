@@ -62,6 +62,7 @@ Read-only analytics dashboard with revenue trends, membership distribution, and 
 - **Inventory Management**: Real-time stock tracking and service seat management
 - **User Authentication**: Email verification, profiles, and membership tracking
 - **Admin Dashboard**: Full CRUD operations with Django admin customization
+- **Analytics Dashboard**: Read-only dashboard with revenue trends, membership distribution, and product performance metrics
 - **Order Processing**: Digital download links, pickup locations, tax calculation
 - **Production Ready**: Docker containerization, Nginx reverse proxy, AWS EC2 deployment
 
@@ -146,6 +147,7 @@ online-fitness-store/
 ├── api/                   # REST API endpoints (optional)
 ├── cart/                  # Shopping cart functionality
 ├── core/                  # Core utilities and shared functionality
+├── dashboard/             # Analytics dashboard with business metrics
 ├── fitness_club/          # Main Django project settings
 │   └── fitness_club/      # Settings, URLs, WSGI/ASGI configs
 ├── home/                  # Home page and landing
@@ -171,6 +173,7 @@ online-fitness-store/
 
 - **accounts/**: Handles user registration, login, email verification, and account settings
 - **cart/**: Shopping cart models and views for adding/removing items
+- **dashboard/**: Analytics dashboard with revenue trends, membership distribution, and product performance metrics
 - **orders/**: Order models, order processing, digital download management, pickup locations
 - **payment/**: Checkout flow, payment processing (simulated), order creation
 - **products/**: Product catalog, categories, inventory management, product types (physical/digital/service)
