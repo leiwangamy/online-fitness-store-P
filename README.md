@@ -14,6 +14,9 @@ A production-ready Django e-commerce platform for fitness products, digital down
 
 **🌐 [Visit Live Site](https://fitness.lwsoc.com/)**
 
+**📊 [Analytics Dashboard](https://fitness.lwsoc.com/dashboard/)**
+
+
 **Demo Credentials:**
 - Email: `demo@fitness-demo.com`
 - Password: `Demo123!`
@@ -43,8 +46,11 @@ Cart management with tax calculation and shipping rules.
 
 ### Admin Dashboard
 Django admin interface for managing products, orders, inventory, and memberships.
-![Admin](screenshots/dashboard.png)
+![Admin](screenshots/admin.png)
 
+### Analytics Dashboard
+Read-only analytics dashboard with revenue trends, membership distribution, and product performance metrics. Accessible at `/dashboard/` (hidden from public navigation for portfolio presentation).
+![Dashboard](screenshots/dashboard.png)
 
 
 ## 🚀 Features
