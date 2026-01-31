@@ -7,6 +7,7 @@
     <a href="{% url 'members:my_membership' %}">Membership</a>
     <a href="{% url 'cart:cart_detail' %}">Cart</a>
     {% if user.is_staff %}
+    <a href="{% url 'dashboard:dashboard' %}" style="background: #2d6a4f; color: white; padding: 5px 10px; border-radius: 3px; text-decoration: none; margin-right: 5px;">📊 Analytics Dashboard</a>
     <a href="{% url 'admin_backup_database' %}" style="background: #417690; color: white; padding: 5px 10px; border-radius: 3px; text-decoration: none;">💾 Backup Database</a>
     {% endif %}
   </div>

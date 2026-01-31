@@ -41,6 +41,9 @@ urlpatterns = [
     path("cart/", include(("cart.urls", "cart"), namespace="cart")),
     path("orders/", include(("orders.urls", "orders"), namespace="orders")),
     path("payment/", include(("payment.urls", "payment"), namespace="payment")),
+    
+    # dashboard app (analytics - publicly accessible for portfolio)
+    path("dashboard/", include(("dashboard.urls", "dashboard"), namespace="dashboard")),
 ]
 
 # Serve media files (in production, consider using nginx or a CDN)

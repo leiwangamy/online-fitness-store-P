@@ -398,12 +398,14 @@
 </div>
 
 <!-- Featured Products Section -->
-{% if featured_products %}
 <div class="featured-section">
     <h2>{% if content %}{{ content.section_title }}{% else %}Featured Products{% endif %}</h2>
     {% if content %}
         <p class="featured-section-description">{{ content.section_description }}</p>
+    {% else %}
+        <p class="featured-section-description">Hand-picked programs and equipment from our store</p>
     {% endif %}
+    {% if featured_products %}
     <div class="featured-products">
         {% for product in featured_products %}
         <div class="product-card">
@@ -426,16 +428,20 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #999;">
+        <p>No featured products available at this time.</p>
+    </div>
+    {% endif %}
     <div class="view-more-link">
         <a href="{% url 'products:list' %}">View More Products →</a>
     </div>
 </div>
-{% endif %}
 
 <!-- Latest Blog Section -->
-{% if latest_blog_posts %}
 <div class="blog-section">
     <h2>Latest Blog</h2>
+    {% if latest_blog_posts %}
     <div class="blog-posts-container">
         {% for post in latest_blog_posts %}
         <div class="blog-post-card">
@@ -463,9 +469,13 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #999;">
+        <p>No blog posts available at this time.</p>
+    </div>
+    {% endif %}
     <div class="view-all-blog-link">
         <a href="{% url 'core:blog' %}">View All Blog Posts →</a>
     </div>
 </div>
-{% endif %}
 {% endblock %}

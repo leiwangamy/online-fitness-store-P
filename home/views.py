@@ -8,10 +8,17 @@ def home(request):
     Home page with hero section, featured products, and latest blog posts
     """
     # Get featured products (limit to 3)
+    # If no featured products, fall back to latest active products
     featured_products = Product.objects.filter(
         is_active=True,
         is_featured=True
     ).select_related("category").prefetch_related("images")[:3]
+    
+    # Fallback: if no featured products, show latest active products
+    if not featured_products.exists():
+        featured_products = Product.objects.filter(
+            is_active=True
+        ).select_related("category").prefetch_related("images").order_by("-id")[:3]
     
     # Get content from model (singleton pattern) with fallback
     content = None
@@ -27,7 +34,7 @@ def home(request):
         from core.models import BlogPost
         latest_blog_posts = BlogPost.objects.filter(
             is_published=True
-        ).prefetch_related('images')[:1]
+        ).order_by("-published_date", "-created_at").prefetch_related('images')[:1]
     except (ImportError, AttributeError, Exception):
         latest_blog_posts = None
     

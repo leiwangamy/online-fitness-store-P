@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     "accounts",
     "core",
     "profiles.apps.ProfilesConfig",
+    "dashboard",
 
 ]
 
@@ -169,16 +170,33 @@ TEMPLATES = [
 # ------------------------------------------------------------
 # Database
 # ------------------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "fitness_club_db"),
-        "USER": os.environ.get("POSTGRES_USER", "fitness_user"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", "db"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+# Use PostgreSQL when DB_HOST is set (including 'db' for Docker)
+# Use SQLite only when DB_HOST is explicitly empty/not set AND running locally (not in Docker)
+db_host = os.getenv("DB_HOST", "")
+use_sqlite = DEBUG and not db_host and not os.path.exists("/.dockerenv")
+
+if use_sqlite:
+    # SQLite for local development (no database server needed)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    # PostgreSQL for Docker or when DB_HOST is explicitly set
+    # Default to 'db' (Docker service name) if not specified
+    db_host = db_host or "db"
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB", "fitness_club_db"),
+            "USER": os.environ.get("POSTGRES_USER", "fitness_user"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "Fitness123!"),
+            "HOST": db_host,
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        }
+    }
 
 # ------------------------------------------------------------
 # Auth / Allauth
