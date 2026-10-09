@@ -7,6 +7,8 @@
 ![Stripe](https://img.shields.io/badge/Payments-Stripe-6772E5)
 ![License](https://img.shields.io/badge/License-Educational-lightgrey)
 
+Project Status: Portfolio demonstration — not currently deployed.
+This project showcases my Python development skills, application architecture, and implementation of an online fitness store.
 
 A production-ready Django e-commerce platform for fitness products, digital downloads, and services. Features include user authentication, multi-product type management, shopping cart, order processing, and AWS EC2 deployment.
 
