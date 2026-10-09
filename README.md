@@ -12,21 +12,6 @@ This project showcases my Python development skills, application architecture, a
 
 A production-ready Django e-commerce platform for fitness products, digital downloads, and services. Features include user authentication, multi-product type management, shopping cart, order processing, and AWS EC2 deployment.
 
-## 🔐 Demo Access
-
-**🌐 [Visit Live Site](https://fitness.lwsoc.com/)**
-
-**📊 [Analytics Dashboard](https://fitness.lwsoc.com/dashboard/)**
-
-
-**Demo Credentials:**
-- Email: `demo@fitness-demo.com`
-- Password: `Demo123!`
-
-> ⚠️ **Note**: This is a demo account. All data is reset periodically. The demo account is pre-verified for instant access. In production, email verification is required for all new users.
-
-
-
 
 ## 📸 Screenshots
 
